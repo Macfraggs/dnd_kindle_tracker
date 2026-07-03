@@ -161,7 +161,7 @@
     .card {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       border: 2px solid #000;
       padding: 12px;
       background: #fff;
@@ -179,6 +179,16 @@
       border: 2px solid #000;
       padding: 16px 12px;
       background: #fff;
+    }
+    .card-input {
+      width: 100%;
+      border: 2px solid #000;
+      padding: 14px 10px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      text-align: center;
+      background: #fff;
+      color: #000;
     }
     .button-row {
       display: flex;
@@ -366,10 +376,10 @@
     const currencyLabels = {
       PP: 'Platinum Coins',
       GP: 'Gold Coins',
-      EP: 'Electrum Coins',
       SP: 'Silver Coins',
       CP: 'Copper Coins',
     };
+    const moneyKeys = ['PP', 'GP', 'SP', 'CP'];
 
     const characterTemplate = {
       name: '',
@@ -392,7 +402,6 @@
       money: {
         PP: 0,
         GP: 0,
-        EP: 0,
         SP: 0,
         CP: 0,
       },
@@ -599,21 +608,43 @@
       const title = document.createElement('div');
       title.className = 'card-title';
       title.textContent = labelText;
-      const value = document.createElement('div');
-      value.className = 'card-value';
-      value.id = `healthValue-${key}`;
-      value.textContent = character.health[key];
-      const buttonRow = document.createElement('div');
-      buttonRow.className = 'button-row';
-      ['-10', '-5', '+5', '+10'].forEach(label => {
-        const button = document.createElement('div');
-        button.className = 'pill';
-        button.textContent = label;
-        const delta = Number(label);
-        button.addEventListener('click', () => adjustHealth(key, delta));
-        buttonRow.appendChild(button);
-      });
-      card.append(title, value, buttonRow);
+      let valueElement;
+      if (key === 'max') {
+        valueElement = document.createElement('input');
+        valueElement.type = 'number';
+        valueElement.className = 'card-input';
+        valueElement.id = `healthInput-${key}`;
+        valueElement.value = character.health[key];
+        valueElement.addEventListener('input', () => {
+          character.health[key] = Math.max(0, Number(valueElement.value) || 0);
+          if (character.health.current > character.health.max) {
+            character.health.current = character.health.max;
+            const currentInput = document.getElementById('healthValue-current');
+            if (currentInput) currentInput.textContent = character.health.current;
+          }
+          saveCharacter();
+          renderHealth();
+        });
+      } else {
+        valueElement = document.createElement('div');
+        valueElement.className = 'card-value';
+        valueElement.id = `healthValue-${key}`;
+        valueElement.textContent = character.health[key];
+      }
+      card.append(title, valueElement);
+      if (key !== 'max') {
+        const buttonRow = document.createElement('div');
+        buttonRow.className = 'button-row';
+        ['-10', '-5', '+5', '+10'].forEach(label => {
+          const button = document.createElement('div');
+          button.className = 'pill';
+          button.textContent = label;
+          const delta = Number(label);
+          button.addEventListener('click', () => adjustHealth(key, delta));
+          buttonRow.appendChild(button);
+        });
+        card.appendChild(buttonRow);
+      }
       return card;
     }
 
@@ -628,10 +659,12 @@
     }
 
     function renderHealth() {
-      ['current', 'max', 'temp'].forEach(key => {
+      ['current', 'temp'].forEach(key => {
         const value = document.getElementById(`healthValue-${key}`);
         if (value) value.textContent = character.health[key];
       });
+      const maxInput = document.getElementById('healthInput-max');
+      if (maxInput) maxInput.value = character.health.max;
     }
 
     function buildMoneyPage() {
@@ -639,7 +672,7 @@
       page.className = 'page';
       const section = document.createElement('div');
       section.className = 'section';
-      Object.keys(character.money).forEach(currency => {
+      moneyKeys.forEach(currency => {
         section.appendChild(createMoneyRow(currency));
       });
       page.appendChild(section);
@@ -652,21 +685,16 @@
       const title = document.createElement('div');
       title.className = 'card-title';
       title.textContent = currencyLabels[currency] || currency;
-      const value = document.createElement('div');
-      value.className = 'card-value';
-      value.id = `moneyValue-${currency}`;
-      value.textContent = character.money[currency];
-      const buttonRow = document.createElement('div');
-      buttonRow.className = 'button-row';
-      ['-100', '-1', '+1', '+100'].forEach(label => {
-        const button = document.createElement('div');
-        button.className = 'pill';
-        button.textContent = label;
-        const delta = Number(label);
-        button.addEventListener('click', () => adjustMoney(currency, delta));
-        buttonRow.appendChild(button);
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'card-input';
+      input.id = `moneyInput-${currency}`;
+      input.value = character.money[currency];
+      input.addEventListener('input', () => {
+        character.money[currency] = Math.max(0, Number(input.value) || 0);
+        saveCharacter();
       });
-      row.append(title, value, buttonRow);
+      row.append(title, input);
       row.dataset.currency = currency;
       return row;
     }
@@ -678,9 +706,9 @@
     }
 
     function renderMoney() {
-      Object.keys(character.money).forEach(currency => {
-        const value = document.getElementById(`moneyValue-${currency}`);
-        if (value) value.textContent = character.money[currency];
+      moneyKeys.forEach(currency => {
+        const input = document.getElementById(`moneyInput-${currency}`);
+        if (input) input.value = character.money[currency];
       });
     }
 
