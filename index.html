@@ -158,6 +158,41 @@
       align-items: center;
       width: 100%;
     }
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 2px solid #000;
+      padding: 12px;
+      background: #fff;
+      width: 100%;
+    }
+    .card-title {
+      font-weight: 700;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .card-value {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      border: 2px solid #000;
+      padding: 16px 12px;
+      background: #fff;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .card-small-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
     .stat-name {
       font-weight: 700;
     }
@@ -183,6 +218,7 @@
       justify-content: center;
       cursor: pointer;
       user-select: none;
+      padding: 0 2px;
     }
     .modifier {
       width: 62px;
@@ -216,6 +252,12 @@
       gap: 8px;
       align-items: center;
       width: 100%;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
     }
     .slot-controls {
       display: flex;
@@ -543,54 +585,36 @@
       const section = document.createElement('div');
       section.className = 'section';
 
-      const currentRow = createHpRow('Current HP', 'current', 0, 999);
-      const maxRow = createHpRow('Max HP', 'max', 0, 999);
-      const tempRow = createHpRow('Temp HP', 'temp', 0, 999);
+      section.appendChild(createHealthCard('Current HP', 'current'));
+      section.appendChild(createHealthCard('Max HP', 'max'));
+      section.appendChild(createHealthCard('Temp HP', 'temp'));
 
-      section.append(currentRow, maxRow, tempRow);
-      const display = document.createElement('div');
-      display.className = 'hp-display';
-      const currentBox = document.createElement('div');
-      currentBox.className = 'hp-box';
-      currentBox.id = 'hpDisplayValue';
-      const updateHpDisplay = () => {
-        currentBox.textContent = `HP: ${character.health.current} / ${character.health.max}`;
-      };
-      updateHpDisplay();
-      section.appendChild(display);
-      display.appendChild(currentBox);
       page.appendChild(section);
       return page;
     }
 
-    function createHpRow(labelText, key, min, max) {
-      const row = document.createElement('div');
-      row.className = 'hp-row';
-      const label = document.createElement('div');
-      label.className = 'stat-name';
-      label.textContent = labelText;
-      const minus10 = document.createElement('div');
-      minus10.className = 'pill';
-      minus10.textContent = '-10';
-      const minus5 = document.createElement('div');
-      minus5.className = 'pill';
-      minus5.textContent = '-5';
+    function createHealthCard(labelText, key) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = labelText;
       const value = document.createElement('div');
-      value.className = 'stat-value';
+      value.className = 'card-value';
+      value.id = `healthValue-${key}`;
       value.textContent = character.health[key];
-      const plus5 = document.createElement('div');
-      plus5.className = 'pill';
-      plus5.textContent = '+5';
-      const plus10 = document.createElement('div');
-      plus10.className = 'pill';
-      plus10.textContent = '+10';
-      minus10.addEventListener('click', () => adjustHealth(key, -10));
-      minus5.addEventListener('click', () => adjustHealth(key, -5));
-      plus5.addEventListener('click', () => adjustHealth(key, 5));
-      plus10.addEventListener('click', () => adjustHealth(key, 10));
-      row.append(label, minus10, minus5, value, plus5, plus10);
-      row.dataset.key = key;
-      return row;
+      const buttonRow = document.createElement('div');
+      buttonRow.className = 'button-row';
+      ['-10', '-5', '+5', '+10'].forEach(label => {
+        const button = document.createElement('div');
+        button.className = 'pill';
+        button.textContent = label;
+        const delta = Number(label);
+        button.addEventListener('click', () => adjustHealth(key, delta));
+        buttonRow.appendChild(button);
+      });
+      card.append(title, value, buttonRow);
+      return card;
     }
 
     function adjustHealth(key, delta) {
@@ -604,15 +628,10 @@
     }
 
     function renderHealth() {
-      const rows = pagesContainer.querySelectorAll('.hp-row');
-      rows.forEach(row => {
-        const key = row.dataset.key;
-        row.querySelector('.stat-value').textContent = character.health[key];
+      ['current', 'max', 'temp'].forEach(key => {
+        const value = document.getElementById(`healthValue-${key}`);
+        if (value) value.textContent = character.health[key];
       });
-      const display = document.getElementById('hpDisplayValue');
-      if (display) {
-        display.textContent = `HP: ${character.health.current} / ${character.health.max}`;
-      }
     }
 
     function buildMoneyPage() {
@@ -629,30 +648,25 @@
 
     function createMoneyRow(currency) {
       const row = document.createElement('div');
-      row.className = 'money-row';
-      const label = document.createElement('div');
-      label.className = 'stat-name';
-      label.textContent = currencyLabels[currency] || currency;
-      const minus100 = document.createElement('div');
-      minus100.className = 'pill';
-      minus100.textContent = '-100';
-      const minus = document.createElement('div');
-      minus.className = 'pill';
-      minus.textContent = '-';
+      row.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = currencyLabels[currency] || currency;
       const value = document.createElement('div');
-      value.className = 'money-value';
+      value.className = 'card-value';
+      value.id = `moneyValue-${currency}`;
       value.textContent = character.money[currency];
-      const plus = document.createElement('div');
-      plus.className = 'pill';
-      plus.textContent = '+';
-      const plus100 = document.createElement('div');
-      plus100.className = 'pill';
-      plus100.textContent = '+100';
-      minus100.addEventListener('click', () => adjustMoney(currency, -100));
-      minus.addEventListener('click', () => adjustMoney(currency, -1));
-      plus.addEventListener('click', () => adjustMoney(currency, 1));
-      plus100.addEventListener('click', () => adjustMoney(currency, 100));
-      row.append(label, minus100, minus, value, plus, plus100);
+      const buttonRow = document.createElement('div');
+      buttonRow.className = 'button-row';
+      ['-100', '-1', '+1', '+100'].forEach(label => {
+        const button = document.createElement('div');
+        button.className = 'pill';
+        button.textContent = label;
+        const delta = Number(label);
+        button.addEventListener('click', () => adjustMoney(currency, delta));
+        buttonRow.appendChild(button);
+      });
+      row.append(title, value, buttonRow);
       row.dataset.currency = currency;
       return row;
     }
@@ -664,10 +678,9 @@
     }
 
     function renderMoney() {
-      const rows = pagesContainer.querySelectorAll('.money-row');
-      rows.forEach(row => {
-        const currency = row.dataset.currency;
-        row.querySelector('.money-value').textContent = character.money[currency];
+      Object.keys(character.money).forEach(currency => {
+        const value = document.getElementById(`moneyValue-${currency}`);
+        if (value) value.textContent = character.money[currency];
       });
     }
 
