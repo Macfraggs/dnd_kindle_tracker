@@ -34,7 +34,9 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      width: 100%;
+      width: min(100%, 760px);
+      max-width: 760px;
+      margin: 0 auto;
       padding: 10px;
       gap: 8px;
     }
@@ -60,18 +62,19 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      justify-content: space-between;
+      justify-content: center;
     }
     .page-nav button {
-      flex: 1 1 48%;
-      min-height: 50px;
+      flex: 1 1 31%;
+      max-width: 220px;
+      min-height: 44px;
       border: 2px solid #000;
       background: #fff;
       color: #000;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      padding: 10px;
+      padding: 10px 8px;
     }
     .page-nav button.active {
       background: #000;
@@ -203,6 +206,13 @@
       align-items: center;
       width: 100%;
     }
+    .spell-circles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-start;
+      padding-top: 4px;
+    }
     .stat-name {
       font-weight: 700;
     }
@@ -258,16 +268,62 @@
     }
     .slot-row {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      grid-template-columns: auto 1fr 1.5fr;
+      gap: 10px;
       align-items: center;
       width: 100%;
+      padding: 10px 0;
+      border-bottom: 1px solid #000;
     }
-    .button-row {
+    .spell-table {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    .spell-row {
+      display: grid;
+      grid-template-columns: auto 1fr 1.5fr;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      padding: 10px 0;
+      border-bottom: 1px solid #000;
+    }
+    .spell-level {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .spell-badge {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #000;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .spell-total {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .spell-total input {
+      width: 100%;
+      max-width: 100px;
+      margin-top: 4px;
+      text-align: center;
+    }
+    .spell-circles {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
+      gap: 6px;
+      justify-content: flex-start;
     }
     .slot-controls {
       display: flex;
@@ -717,37 +773,49 @@
       page.className = 'page';
       const section = document.createElement('div');
       section.className = 'section';
+      const table = document.createElement('div');
+      table.className = 'spell-table';
       character.spellSlots.forEach(slot => {
-        section.appendChild(createSpellSlotRow(slot));
+        table.appendChild(createSpellSlotRow(slot));
       });
+      section.appendChild(table);
       page.appendChild(section);
       return page;
     }
 
     function createSpellSlotRow(slot) {
       const row = document.createElement('div');
-      row.className = 'slot-row';
+      row.className = 'spell-row';
       const label = document.createElement('div');
-      label.className = 'stat-name';
-      label.textContent = `Level ${slot.level}`;
-      const controls = document.createElement('div');
-      controls.className = 'slot-controls';
+      label.className = 'spell-level';
+      const badge = document.createElement('div');
+      badge.className = 'spell-badge';
+      badge.textContent = slot.level;
+      const labelText = document.createElement('div');
+      labelText.textContent = `Level ${slot.level}`;
+      label.append(badge, labelText);
+
+      const totalBox = document.createElement('div');
+      totalBox.className = 'spell-total';
+      const totalLabel = document.createElement('div');
+      totalLabel.textContent = 'Total';
       const maxInput = document.createElement('input');
       maxInput.type = 'number';
       maxInput.min = 0;
       maxInput.value = slot.max;
-      maxInput.style.width = '80px';
       maxInput.addEventListener('input', () => {
         slot.max = Math.max(0, Number(maxInput.value) || 0);
         if (slot.used > slot.max) slot.used = slot.max;
         renderSpellSlots();
         saveCharacter();
       });
+      totalBox.append(totalLabel, maxInput);
+
       const circles = document.createElement('div');
-      circles.className = 'slot-circles';
+      circles.className = 'spell-circles';
       createSlotCircles(slot, circles);
-      controls.append(maxInput, circles);
-      row.append(label, controls);
+
+      row.append(label, totalBox, circles);
       row.dataset.level = slot.level;
       return row;
     }
