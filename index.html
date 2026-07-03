@@ -91,7 +91,7 @@
     .section {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       border: 2px solid #000;
       padding: 10px;
       background: #fff;
@@ -101,12 +101,12 @@
     .field-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 6px;
     }
     .field {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
     label {
       font-size: 0.9rem;
@@ -153,8 +153,8 @@
     }
     .stat-row, .money-row, .hp-row {
       display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      gap: 8px;
+      grid-template-columns: 1fr repeat(5, auto);
+      gap: 4px;
       align-items: center;
       width: 100%;
     }
@@ -321,6 +321,13 @@
     // Data model for the character tracker
     const STORAGE_KEY = 'inkSheetCharacter';
     const pages = ['Character', 'Stats', 'Health', 'Money', 'Spell Slots', 'Settings'];
+    const currencyLabels = {
+      PP: 'Platinum Coins',
+      GP: 'Gold Coins',
+      EP: 'Electrum Coins',
+      SP: 'Silver Coins',
+      CP: 'Copper Coins',
+    };
 
     const characterTemplate = {
       name: '',
@@ -562,24 +569,31 @@
       const label = document.createElement('div');
       label.className = 'stat-name';
       label.textContent = labelText;
-      const minus = document.createElement('div');
-      minus.className = 'pill';
-      minus.textContent = '-';
+      const minus10 = document.createElement('div');
+      minus10.className = 'pill';
+      minus10.textContent = '-10';
+      const minus5 = document.createElement('div');
+      minus5.className = 'pill';
+      minus5.textContent = '-5';
       const value = document.createElement('div');
       value.className = 'stat-value';
       value.textContent = character.health[key];
-      const plus = document.createElement('div');
-      plus.className = 'pill';
-      plus.textContent = '+';
-      minus.addEventListener('click', () => adjustHealth(key, -1));
-      plus.addEventListener('click', () => adjustHealth(key, 1));
-      row.append(label, minus, value, plus);
+      const plus5 = document.createElement('div');
+      plus5.className = 'pill';
+      plus5.textContent = '+5';
+      const plus10 = document.createElement('div');
+      plus10.className = 'pill';
+      plus10.textContent = '+10';
+      minus10.addEventListener('click', () => adjustHealth(key, -10));
+      minus5.addEventListener('click', () => adjustHealth(key, -5));
+      plus5.addEventListener('click', () => adjustHealth(key, 5));
+      plus10.addEventListener('click', () => adjustHealth(key, 10));
+      row.append(label, minus10, minus5, value, plus5, plus10);
       row.dataset.key = key;
       return row;
     }
 
     function adjustHealth(key, delta) {
-      const page = pagesContainer.querySelector('.page:nth-child(3)');
       const max = key === 'current' ? character.health.max : 999;
       character.health[key] = Math.max(0, Math.min(max, character.health[key] + delta));
       if (key === 'max' && character.health.current > character.health.max) {
@@ -618,7 +632,10 @@
       row.className = 'money-row';
       const label = document.createElement('div');
       label.className = 'stat-name';
-      label.textContent = currency;
+      label.textContent = currencyLabels[currency] || currency;
+      const minus100 = document.createElement('div');
+      minus100.className = 'pill';
+      minus100.textContent = '-100';
       const minus = document.createElement('div');
       minus.className = 'pill';
       minus.textContent = '-';
@@ -628,9 +645,14 @@
       const plus = document.createElement('div');
       plus.className = 'pill';
       plus.textContent = '+';
+      const plus100 = document.createElement('div');
+      plus100.className = 'pill';
+      plus100.textContent = '+100';
+      minus100.addEventListener('click', () => adjustMoney(currency, -100));
       minus.addEventListener('click', () => adjustMoney(currency, -1));
       plus.addEventListener('click', () => adjustMoney(currency, 1));
-      row.append(label, minus, value, plus);
+      plus100.addEventListener('click', () => adjustMoney(currency, 100));
+      row.append(label, minus100, minus, value, plus, plus100);
       row.dataset.currency = currency;
       return row;
     }
