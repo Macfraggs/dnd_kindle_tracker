@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KCC v0.2</title>
+<style>
+body{font-family:Arial;max-width:760px;margin:auto;padding:15px}
+.page{display:none}.active{display:block}
+.row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #000;padding:6px 0}
+button{font-size:18px;padding:6px 12px;margin:2px}
+.nav{display:flex;justify-content:space-between;margin-top:16px;border-top:2px solid #000;padding-top:8px}
+input{font-size:18px}
+</style></head><body>
+<h1>Kindle Character Companion v0.2</h1>
+<div id=p0 class="page active">
+<h2>Character</h2>
+<div>Name <input id=name></div>
+<div>Race <input id=race></div>
+<div>Class <input id=cls></div>
+<div>Subclass <input id=sub></div>
+<div>Level <input id=lvl type=number min=1 max=20></div>
+<div>Prof. Bonus <span id=pb></span></div>
+</div>
+<div id=p1 class=page><h2>Stats</h2><div id=stats></div></div>
+<div id=p2 class=page><h2>Health</h2><p>Coming next</p></div>
+<div id=p3 class=page><h2>Coins</h2><p>Coming next</p></div>
+<div id=p4 class=page><h2>Spell Slots</h2><p>Coming next</p></div>
+<div id=p5 class=page><h2>Settings</h2><button onclick=exp()>Export</button><input id=imp type=file></div>
+<div class=nav><button onclick=nav(-1)>◀ Prev</button><b id=title></b><button onclick=nav(1)>Next ▶</button></div>
+<script>
+const names=["STR","DEX","CON","INT","WIS","CHA"];
+let page=0;
+let c=JSON.parse(localStorage.kcc||'{}');
+c.info=c.info||{name:"",race:"",class:"",subclass:"",level:1};
+c.stats=c.stats||{STR:10,DEX:10,CON:10,INT:10,WIS:10,CHA:10};
+function prof(){let l=+c.info.level||1;return l<5?2:l<9?3:l<13?4:l<17?5:6}
+function mod(v){return Math.floor((v-10)/2)}
+function drawStats(){
+stats.innerHTML="";
+names.forEach(n=>{
+let d=document.createElement("div");d.className="row";
+d.innerHTML=`<b>${n}</b><button>-</button><span>${c.stats[n]}</span><button>+</button><span>${mod(c.stats[n])>=0?'+':''}${mod(c.stats[n])}</span>`;
+let b=d.querySelectorAll("button");
+b[0].onclick=()=>{c.stats[n]=Math.max(1,c.stats[n]-1);save();render();}
+b[1].onclick=()=>{c.stats[n]=Math.min(30,c.stats[n]+1);save();render();}
+stats.appendChild(d);
+});
+}
+function render(){
+name.value=c.info.name;race.value=c.info.race;cls.value=c.info.class;sub.value=c.info.subclass;lvl.value=c.info.level;pb.textContent="+"+prof();
+drawStats();
+document.querySelectorAll(".page").forEach((e,i)=>e.classList.toggle("active",i==page));
+title.textContent=["Character","Stats","Health","Coins","Spell Slots","Settings"][page]+" "+(page+1)+"/6";
+}
+function save(){c.info={name:name.value,race:race.value,class:cls.value,subclass:sub.value,level:+lvl.value||1};localStorage.kcc=JSON.stringify(c)}
+[name,race,cls,sub,lvl].forEach(e=>e.oninput=()=>{save();render();});
+function nav(d){page=(page+d+6)%6;render()}
+function exp(){save();let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(c,null,2)],{type:"application/json"}));a.download=(c.info.name||"character")+".json";a.click()}
+imp.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{c=JSON.parse(r.result);save();render()};r.readAsText(f)}
+render();
+</script></body></html>
