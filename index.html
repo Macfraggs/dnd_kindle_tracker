@@ -165,13 +165,15 @@
       width: 100%;
     }
     .stats-page {
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     .stats-section {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      overflow: visible;
+      overflow-y: auto;
+      overflow-x: hidden;
       min-height: 100%;
     }
     .stats-card {
@@ -291,22 +293,36 @@
       accent-color: #000;
       margin: 0;
     }
+    .skill-group {
+      border: 1px solid #000;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: #fff;
+    }
     .skill-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 60px 72px 72px;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 6px;
       align-items: center;
-      min-height: 44px;
+      min-height: 38px;
+      padding: 2px 0;
+      border-bottom: 1px solid #000;
+    }
+    .skill-row:last-child {
+      border-bottom: none;
     }
     .skill-title {
       display: flex;
-      flex-direction: column;
-      gap: 1px;
+      align-items: baseline;
+      gap: 4px;
       min-width: 0;
+      overflow: hidden;
     }
     .skill-name {
       font-weight: 700;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -314,6 +330,40 @@
     .skill-ability {
       font-size: 0.78rem;
       color: #000;
+      white-space: nowrap;
+    }
+    .skill-bonus {
+      min-width: 38px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 4px 6px;
+    }
+    .skill-state-button {
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 6px;
+      min-height: 32px;
+      white-space: nowrap;
+    }
+    .passive-card {
+      border: 2px solid #000;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #fff;
+      margin-top: 8px;
+    }
+    .passive-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .passive-row {
       display: flex;
@@ -321,7 +371,7 @@
       align-items: center;
       gap: 8px;
       font-weight: 700;
-      min-height: 42px;
+      min-height: 34px;
     }
     .passive-value {
       border: 2px solid #000;
@@ -780,7 +830,33 @@
       section.appendChild(createField('Race', 'race', 'text', character.race));
       section.appendChild(createField('Class', 'class', 'text', character.class));
       section.appendChild(createField('Level', 'level', 'number', character.level, { min: 1, max: 20 }));
+      section.appendChild(createPassiveScoresCard());
       return page;
+    }
+
+    function createPassiveScoresCard() {
+      const card = document.createElement('div');
+      card.className = 'passive-card';
+      const title = document.createElement('div');
+      title.className = 'passive-card-title';
+      title.textContent = 'Passive Scores';
+      card.appendChild(title);
+      [
+        { label: 'Passive Perception', skill: 'Perception' },
+        { label: 'Passive Investigation', skill: 'Investigation' },
+        { label: 'Passive Insight', skill: 'Insight' },
+      ].forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'passive-row';
+        const label = document.createElement('div');
+        label.textContent = item.label;
+        const value = document.createElement('div');
+        value.className = 'passive-value';
+        value.textContent = getPassiveScore(item.skill);
+        row.append(label, value);
+        card.appendChild(row);
+      });
+      return card;
     }
 
     function createField(labelText, key, type, value, attrs = {}) {
@@ -881,17 +957,11 @@
 
       const skillsCard = document.createElement('div');
       skillsCard.className = 'stats-card';
-      const skillsTitle = document.createElement('div');
-      skillsTitle.className = 'stats-card-title';
-      skillsTitle.textContent = 'Skills';
       const skillsList = document.createElement('div');
       skillsList.className = 'stats-list';
       abilityNames.forEach(ability => {
         const abilityGroup = document.createElement('div');
-        abilityGroup.className = 'stats-card';
-        const groupTitle = document.createElement('div');
-        groupTitle.className = 'stats-card-title';
-        groupTitle.textContent = ability;
+        abilityGroup.className = 'skill-group';
         const groupList = document.createElement('div');
         groupList.className = 'stats-list';
         skillDefinitions
@@ -899,34 +969,11 @@
           .forEach(skill => {
             groupList.appendChild(createSkillRow(skill));
           });
-        abilityGroup.append(groupTitle, groupList);
+        abilityGroup.appendChild(groupList);
         skillsList.appendChild(abilityGroup);
       });
-      skillsCard.append(skillsTitle, skillsList);
+      skillsCard.appendChild(skillsList);
       skillsView.appendChild(skillsCard);
-
-      const passiveCard = document.createElement('div');
-      passiveCard.className = 'stats-card';
-      const passiveTitle = document.createElement('div');
-      passiveTitle.className = 'stats-card-title';
-      passiveTitle.textContent = 'Passive Scores';
-      passiveCard.appendChild(passiveTitle);
-      [
-        { label: 'Passive Perception', skill: 'Perception' },
-        { label: 'Passive Investigation', skill: 'Investigation' },
-        { label: 'Passive Insight', skill: 'Insight' },
-      ].forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'passive-row';
-        const label = document.createElement('div');
-        label.textContent = item.label;
-        const value = document.createElement('div');
-        value.className = 'passive-value';
-        value.textContent = getPassiveScore(item.skill);
-        row.append(label, value);
-        passiveCard.appendChild(row);
-      });
-      statsView.appendChild(passiveCard);
 
       section.appendChild(statsView);
       section.appendChild(skillsView);
@@ -981,6 +1028,25 @@
       return row;
     }
 
+    function getSkillStateText(skillData) {
+      if (skillData.expertise) return '★ Expertise';
+      if (skillData.proficient) return '✓ Proficient';
+      return '□ None';
+    }
+
+    function cycleSkillState(skillData) {
+      if (skillData.expertise) {
+        skillData.expertise = false;
+        skillData.proficient = false;
+      } else if (skillData.proficient) {
+        skillData.expertise = true;
+        skillData.proficient = true;
+      } else {
+        skillData.proficient = true;
+        skillData.expertise = false;
+      }
+    }
+
     function createSkillRow(skill) {
       const row = document.createElement('div');
       row.className = 'skill-row';
@@ -997,50 +1063,23 @@
       title.append(skillName, skillAbility);
 
       const bonus = document.createElement('div');
-      bonus.className = 'stats-badge';
+      bonus.className = 'skill-bonus';
       bonus.dataset.role = 'skill-bonus';
 
-      const proficiencyWrap = document.createElement('label');
-      proficiencyWrap.className = 'checkbox-wrap';
-      const proficiencyCheckbox = document.createElement('input');
-      proficiencyCheckbox.type = 'checkbox';
-      proficiencyCheckbox.dataset.role = 'proficiency';
-      proficiencyCheckbox.checked = character.skills[skill.name].proficient;
-      proficiencyCheckbox.addEventListener('change', () => {
+      const stateButton = document.createElement('button');
+      stateButton.type = 'button';
+      stateButton.className = 'skill-state-button';
+      stateButton.dataset.role = 'skill-state';
+      stateButton.textContent = getSkillStateText(character.skills[skill.name]);
+      stateButton.addEventListener('click', () => {
         const skillData = character.skills[skill.name];
-        skillData.proficient = proficiencyCheckbox.checked;
-        if (!skillData.proficient) {
-          skillData.expertise = false;
-        }
+        cycleSkillState(skillData);
+        stateButton.textContent = getSkillStateText(skillData);
         saveCharacter();
         renderStats();
       });
-      const proficiencyLabel = document.createElement('span');
-      proficiencyLabel.textContent = 'Prof';
-      proficiencyWrap.append(proficiencyCheckbox, proficiencyLabel);
 
-      const expertiseWrap = document.createElement('label');
-      expertiseWrap.className = 'checkbox-wrap';
-      const expertiseCheckbox = document.createElement('input');
-      expertiseCheckbox.type = 'checkbox';
-      expertiseCheckbox.dataset.role = 'expertise';
-      expertiseCheckbox.checked = character.skills[skill.name].expertise;
-      expertiseCheckbox.addEventListener('change', () => {
-        const skillData = character.skills[skill.name];
-        if (expertiseCheckbox.checked) {
-          skillData.proficient = true;
-          skillData.expertise = true;
-        } else {
-          skillData.expertise = false;
-        }
-        saveCharacter();
-        renderStats();
-      });
-      const expertiseLabel = document.createElement('span');
-      expertiseLabel.textContent = 'Exp';
-      expertiseWrap.append(expertiseCheckbox, expertiseLabel);
-
-      row.append(title, bonus, proficiencyWrap, expertiseWrap);
+      row.append(title, bonus, stateButton);
       return row;
     }
 
@@ -1117,22 +1156,9 @@
         if (bonus) {
           bonus.textContent = formatModifier(getSkillBonus(skillName));
         }
-        const proficiencyCheckbox = row.querySelector('[data-role="proficiency"]');
-        if (proficiencyCheckbox) {
-          proficiencyCheckbox.checked = skillData.proficient;
-        }
-        const expertiseCheckbox = row.querySelector('[data-role="expertise"]');
-        if (expertiseCheckbox) {
-          expertiseCheckbox.checked = skillData.expertise;
-        }
-      });
-
-      section.querySelectorAll('.passive-row').forEach(row => {
-        const value = row.querySelector('.passive-value');
-        if (value) {
-          const label = row.firstElementChild.textContent;
-          const skillName = label.includes('Perception') ? 'Perception' : label.includes('Investigation') ? 'Investigation' : 'Insight';
-          value.textContent = getPassiveScore(skillName);
+        const stateButton = row.querySelector('[data-role="skill-state"]');
+        if (stateButton) {
+          stateButton.textContent = getSkillStateText(skillData);
         }
       });
     }
