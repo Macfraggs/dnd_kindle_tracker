@@ -498,6 +498,36 @@
       justify-content: flex-start;
       padding-top: 4px;
     }
+    .combat-counters-buttons {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .combat-counters-totals {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .counter-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 2px solid #000;
+      background: #fff;
+      padding: 10px;
+    }
+    .counter-reset-button {
+      min-height: 44px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      padding: 10px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
     .stat-name {
       font-weight: 700;
     }
@@ -714,7 +744,7 @@
   <script>
     // Data model for the character tracker
     const STORAGE_KEY = 'inkSheetCharacter';
-    const pages = ['Character', 'Stats', 'Health', 'Money', 'Spell Slots', 'Settings'];
+    const pages = ['Character', 'Stats', 'Health', 'Money', 'Spell Slots', 'Combat Counters', 'Settings'];
     const currencyLabels = {
       PP: 'Platinum Coins',
       GP: 'Gold Coins',
@@ -804,6 +834,13 @@
         max: 0,
         used: 0,
       })),
+      combatCounters: {
+        damageTaken: 0,
+        damageDealt: 0,
+        healingReceived: 0,
+        healingGiven: 0,
+        temporaryHP: 0,
+      },
     };
 
     let character = loadCharacter();
@@ -858,6 +895,7 @@
 
     function createPageNavigation() {
       pages.forEach((pageName, index) => {
+        if (pageName === 'Combat Counters') return;
         const button = createButton(pageName, () => switchPage(index));
         if (index === currentPage) button.classList.add('active');
         navButtons.appendChild(button);
@@ -883,6 +921,7 @@
       pagesContainer.appendChild(buildHealthPage());
       pagesContainer.appendChild(buildMoneyPage());
       pagesContainer.appendChild(buildSpellSlotsPage());
+      pagesContainer.appendChild(buildCombatCountersPage());
       pagesContainer.appendChild(buildSettingsPage());
       switchPage(currentPage);
     }
@@ -1266,6 +1305,9 @@
       section.appendChild(createHealthCard('Max HP', 'max'));
       section.appendChild(createHealthCard('Temp HP', 'temp'));
 
+      const combatButton = createButton('Combat Counters', () => switchPage(pages.indexOf('Combat Counters')));
+      section.appendChild(combatButton);
+
       page.appendChild(section);
       return page;
     }
@@ -1423,6 +1465,97 @@
       section.append(header, table, actionRow);
       page.appendChild(section);
       return page;
+    }
+
+    function buildCombatCountersPage() {
+      const page = document.createElement('section');
+      page.className = 'page';
+      const section = document.createElement('div');
+      section.className = 'section';
+
+      const title = document.createElement('div');
+      title.className = 'stats-card-title';
+      title.textContent = 'Combat Counters';
+
+      const inputWrapper = document.createElement('div');
+      inputWrapper.className = 'field';
+      const inputLabel = document.createElement('label');
+      inputLabel.textContent = 'Amount';
+      const inputField = document.createElement('input');
+      inputField.type = 'number';
+      inputField.className = 'stats-input';
+      inputField.dataset.role = 'combat-counter-input';
+      inputField.placeholder = '0';
+      inputField.addEventListener('input', () => {
+        if (inputField.value === '') return;
+        inputField.value = String(Math.max(0, Number(inputField.value) || 0));
+      });
+      inputWrapper.append(inputLabel, inputField);
+
+      const buttons = document.createElement('div');
+      buttons.className = 'combat-counters-buttons';
+      const buttonDefinitions = [
+        { label: 'Damage Taken', key: 'damageTaken' },
+        { label: 'Damage Dealt', key: 'damageDealt' },
+        { label: 'Healing Received', key: 'healingReceived' },
+        { label: 'Healing Given', key: 'healingGiven' },
+        { label: 'Temporary HP', key: 'temporaryHP' },
+      ];
+
+      buttonDefinitions.forEach(def => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'large-button';
+        button.textContent = def.label;
+        button.addEventListener('click', () => {
+          const amount = Number(inputField.value) || 0;
+          if (amount <= 0) return;
+          character.combatCounters[def.key] += amount;
+          inputField.value = '';
+          saveCharacter();
+          renderCombatCounters();
+        });
+        buttons.append(button);
+      });
+
+      const totals = document.createElement('div');
+      totals.className = 'combat-counters-totals';
+      totals.dataset.role = 'combat-counters-totals';
+
+      section.append(title, inputWrapper, buttons, totals);
+      page.appendChild(section);
+      renderCombatCounters();
+      return page;
+    }
+
+    function renderCombatCounters() {
+      const totalsContainer = document.querySelector('[data-role="combat-counters-totals"]');
+      if (!totalsContainer) return;
+      totalsContainer.innerHTML = '';
+      const counters = [
+        { label: 'Damage Taken', key: 'damageTaken' },
+        { label: 'Damage Dealt', key: 'damageDealt' },
+        { label: 'Healing Received', key: 'healingReceived' },
+        { label: 'Healing Given', key: 'healingGiven' },
+        { label: 'Temporary HP', key: 'temporaryHP' },
+      ];
+      counters.forEach(counter => {
+        const row = document.createElement('div');
+        row.className = 'counter-total-row';
+        const label = document.createElement('div');
+        label.textContent = `${counter.label}: ${character.combatCounters[counter.key] || 0}`;
+        const resetButton = document.createElement('button');
+        resetButton.type = 'button';
+        resetButton.className = 'counter-reset-button';
+        resetButton.textContent = 'Reset';
+        resetButton.addEventListener('click', () => {
+          character.combatCounters[counter.key] = 0;
+          saveCharacter();
+          renderCombatCounters();
+        });
+        row.append(label, resetButton);
+        totalsContainer.appendChild(row);
+      });
     }
 
     function createSpellRowHeader() {
@@ -1661,7 +1794,7 @@
       header.className = 'spell-header';
       const title = document.createElement('div');
       title.className = 'spell-title';
-      title.textContent = 'Spell Slots'; 
+      title.textContent = 'Spell Slots';
       const subtitle = document.createElement('div');
       subtitle.className = 'spell-subtitle';
       subtitle.textContent = `Spellcasting: ${info.type} (${info.subclass})`;
@@ -1694,6 +1827,7 @@
       renderHealth();
       renderMoney();
       renderSpellSlots();
+      renderCombatCounters();
       const jsonArea = document.getElementById('jsonArea');
       if (jsonArea) jsonArea.value = '';
     }
