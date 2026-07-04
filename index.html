@@ -500,25 +500,36 @@
     }
     .combat-counters-buttons {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .combat-counters-buttons button {
+      width: 100%;
+      min-height: 48px;
+      align-self: stretch;
     }
     .combat-counters-totals {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
     }
     .counter-total-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
       gap: 10px;
       border: 2px solid #000;
       background: #fff;
-      padding: 10px;
+      padding: 12px;
+      min-height: 90px;
+      justify-content: space-between;
+    }
+    .counter-total-row > div {
+      width: 100%;
     }
     .counter-reset-button {
+      width: 100%;
       min-height: 44px;
       border: 2px solid #000;
       background: #fff;
@@ -527,6 +538,12 @@
       padding: 10px 12px;
       cursor: pointer;
       white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .combat-counters-buttons,
+      .combat-counters-totals {
+        grid-template-columns: 1fr;
+      }
     }
     .stat-name {
       font-weight: 700;
@@ -731,25 +748,25 @@
   <div class="app-shell">
     <header>
       <div class="logo">InkSheet</div>
-      <div class="page-title" id="headerTitle">Character</div>
+      <div class="page-title" id="headerTitle">Charakter</div>
     </header>
 
     <nav class="page-nav" id="navButtons"></nav>
 
     <main class="page-container" id="pages"></main>
 
-    <div class="status-bar" id="statusBar">Autosave enabled. Load or edit values to save automatically.</div>
+    <div class="status-bar" id="statusBar">Autospeichern aktiviert. Werte werden automatisch gespeichert.</div>
   </div>
 
   <script>
     // Data model for the character tracker
     const STORAGE_KEY = 'inkSheetCharacter';
-    const pages = ['Character', 'Stats', 'Health', 'Money', 'Spell Slots', 'Combat Counters', 'Settings'];
+    const pages = ['Charakter', 'Werte', 'Gesundheit', 'Geld', 'Zauberplätze', 'Kampfzähler', 'Einstellungen'];
     const currencyLabels = {
-      PP: 'Platinum Coins',
-      GP: 'Gold Coins',
-      SP: 'Silver Coins',
-      CP: 'Copper Coins',
+      PP: 'Platinmünzen',
+      GP: 'Goldmünzen',
+      SP: 'Silbermünzen',
+      CP: 'Kupfermünzen',
     };
     const moneyKeys = ['PP', 'GP', 'SP', 'CP'];
     const spellLevels = [1, 2, 3, 4, 5];
@@ -837,7 +854,6 @@
       combatCounters: {
         damageTaken: 0,
         damageDealt: 0,
-        healingReceived: 0,
         healingGiven: 0,
         temporaryHP: 0,
       },
@@ -853,7 +869,7 @@
 
     function saveCharacter() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(character));
-      statusBar.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+      statusBar.textContent = 'Gespeichert um ' + new Date().toLocaleTimeString();
     }
 
     function loadCharacter() {
@@ -911,7 +927,7 @@
       Array.from(pagesContainer.children).forEach((page, idx) => {
         page.classList.toggle('active', idx === index);
       });
-      statusBar.textContent = 'Viewing ' + pages[index] + ' page. Changes save automatically.';
+      statusBar.textContent = 'Ansicht: ' + pages[index] + '. Änderungen werden automatisch gespeichert.';
     }
 
     function buildApp() {
@@ -932,9 +948,9 @@
       page.innerHTML = '<div class="section"></div>';
       const section = page.firstElementChild;
       section.appendChild(createField('Name', 'name', 'text', character.name));
-      section.appendChild(createField('Race', 'race', 'text', character.race));
-      section.appendChild(createField('Class', 'class', 'text', character.class));
-      section.appendChild(createField('Level', 'level', 'number', character.level, { min: 1, max: 20 }));
+      section.appendChild(createField('Rasse', 'race', 'text', character.race));
+      section.appendChild(createField('Klasse', 'class', 'text', character.class));
+      section.appendChild(createField('Stufe', 'level', 'number', character.level, { min: 1, max: 20 }));
       section.appendChild(createPassiveScoresCard());
       return page;
     }
@@ -944,12 +960,12 @@
       card.className = 'passive-card';
       const title = document.createElement('div');
       title.className = 'passive-card-title';
-      title.textContent = 'Passive Scores';
+      title.textContent = 'Passive Werte';
       card.appendChild(title);
       [
-        { label: 'Passive Perception', skill: 'Perception' },
-        { label: 'Passive Investigation', skill: 'Investigation' },
-        { label: 'Passive Insight', skill: 'Insight' },
+        { label: 'Passive Wahrnehmung', skill: 'Perception' },
+        { label: 'Passives Ermitteln', skill: 'Investigation' },
+        { label: 'Passive Einsicht', skill: 'Insight' },
       ].forEach(item => {
         const row = document.createElement('div');
         row.className = 'passive-row';
@@ -1046,11 +1062,11 @@
       subpageHeader.className = 'skill-subpage-header';
       const subpageTitle = document.createElement('div');
       subpageTitle.dataset.role = 'skill-subpage-title';
-      subpageTitle.textContent = 'Skills';
+      subpageTitle.textContent = 'Fertigkeiten';
       const closeButton = document.createElement('button');
       closeButton.type = 'button';
       closeButton.className = 'ability-skill-btn';
-      closeButton.textContent = '← Back to Stats';
+      closeButton.textContent = '← Zurück zu Werte';
       closeButton.addEventListener('click', () => {
         section.querySelector('[data-role="skill-subpage"]').classList.remove('active');
         section.dataset.activeAbility = '';
@@ -1101,13 +1117,13 @@
         renderStats();
       });
       const saveLabel = document.createElement('span');
-      saveLabel.textContent = 'Save';
+      saveLabel.textContent = 'Rettungswurf';
       saveWrap.append(saveCheckbox, saveLabel);
 
       const skillsButton = document.createElement('button');
       skillsButton.type = 'button';
       skillsButton.className = 'ability-skill-btn';
-      skillsButton.textContent = 'Skills';
+      skillsButton.textContent = 'Fertigkeiten';
       skillsButton.addEventListener('click', () => openAbilitySkills(ability));
 
       row.append(label, scoreInput, modifier, saveWrap, skillsButton);
@@ -1122,7 +1138,7 @@
       const list = section.querySelector('[data-role="skill-subpage-list"]');
       if (!subpage || !title || !list) return;
       section.dataset.activeAbility = ability;
-      title.textContent = `${ability} Skills`;
+      title.textContent = `${ability}-Fertigkeiten`;
       const matchingSkills = skillDefinitions.filter(skill => skill.ability === ability);
       list.innerHTML = '';
       matchingSkills.forEach(skill => {
@@ -1270,9 +1286,9 @@
       const className = String(character.class || '').trim();
       const normalized = className.toLowerCase();
       if (halfCasterClasses.includes(normalized)) {
-        return { type: 'Half Caster', subclass: className || 'Half Caster' };
+        return { type: 'Half Caster', typeLabel: 'Halbzauberer', subclass: className || 'Halbzauberer' };
       }
-      return { type: 'Spellcasting', subclass: className || 'Prepared' };
+      return { type: 'Spellcasting', typeLabel: 'Zaubern', subclass: className || 'Vorbereitet' };
     }
 
     function getSpellLevelSlots(level) {
@@ -1305,7 +1321,7 @@
       section.appendChild(createHealthCard('Max HP', 'max'));
       section.appendChild(createHealthCard('Temp HP', 'temp'));
 
-      const combatButton = createButton('Combat Counters', () => switchPage(pages.indexOf('Combat Counters')));
+      const combatButton = createButton('Kampfzähler', () => switchPage(pages.indexOf('Kampfzähler')));
       section.appendChild(combatButton);
 
       page.appendChild(section);
@@ -1433,10 +1449,10 @@
       header.className = 'spell-header';
       const title = document.createElement('div');
       title.className = 'spell-title';
-      title.textContent = 'Spell Slots';
+      title.textContent = 'Zauberplätze';
       const subtitle = document.createElement('div');
       subtitle.className = 'spell-subtitle';
-      subtitle.textContent = `Spellcasting: ${info.type} (${info.subclass})`;
+      subtitle.textContent = `Zaubern: ${info.type} (${info.subclass})`;
       header.append(title, subtitle);
 
       const table = document.createElement('div');
@@ -1447,7 +1463,7 @@
       if (visibleLevels.length === 0) {
         const noSlots = document.createElement('div');
         noSlots.className = 'spell-no-slots';
-        noSlots.textContent = 'No spell slots available at this character level.';
+        noSlots.textContent = 'Auf dieser Stufe sind keine Zauberplätze verfügbar.';
         table.appendChild(noSlots);
       } else {
         visibleLevels.forEach(level => {
@@ -1458,8 +1474,8 @@
 
       const actionRow = document.createElement('div');
       actionRow.className = 'spell-actions';
-      const restoreButton = createButton('Restore All Slots', restoreAllSlots);
-      const clearButton = createButton('Clear All', clearAllSlots);
+      const restoreButton = createButton('Alle Plätze wiederherstellen', restoreAllSlots);
+      const clearButton = createButton('Alle löschen', clearAllSlots);
       actionRow.append(restoreButton, clearButton);
 
       section.append(header, table, actionRow);
@@ -1475,12 +1491,12 @@
 
       const title = document.createElement('div');
       title.className = 'stats-card-title';
-      title.textContent = 'Combat Counters';
+      title.textContent = 'Kampfzähler';
 
       const inputWrapper = document.createElement('div');
       inputWrapper.className = 'field';
       const inputLabel = document.createElement('label');
-      inputLabel.textContent = 'Amount';
+      inputLabel.textContent = 'Betrag';
       const inputField = document.createElement('input');
       inputField.type = 'number';
       inputField.className = 'stats-input';
@@ -1495,11 +1511,10 @@
       const buttons = document.createElement('div');
       buttons.className = 'combat-counters-buttons';
       const buttonDefinitions = [
-        { label: 'Damage Taken', key: 'damageTaken' },
-        { label: 'Damage Dealt', key: 'damageDealt' },
-        { label: 'Healing Received', key: 'healingReceived' },
-        { label: 'Healing Given', key: 'healingGiven' },
-        { label: 'Temporary HP', key: 'temporaryHP' },
+        { label: 'Schaden erhalten', key: 'damageTaken' },
+        { label: 'Schaden verursacht', key: 'damageDealt' },
+        { label: 'Heilung gegeben', key: 'healingGiven' },
+        { label: 'Temporäre TP', key: 'temporaryHP' },
       ];
 
       buttonDefinitions.forEach(def => {
@@ -1533,11 +1548,10 @@
       if (!totalsContainer) return;
       totalsContainer.innerHTML = '';
       const counters = [
-        { label: 'Damage Taken', key: 'damageTaken' },
-        { label: 'Damage Dealt', key: 'damageDealt' },
-        { label: 'Healing Received', key: 'healingReceived' },
-        { label: 'Healing Given', key: 'healingGiven' },
-        { label: 'Temporary HP', key: 'temporaryHP' },
+        { label: 'Schaden erhalten', key: 'damageTaken' },
+        { label: 'Schaden verursacht', key: 'damageDealt' },
+        { label: 'Heilung gegeben', key: 'healingGiven' },
+        { label: 'Temporäre TP', key: 'temporaryHP' },
       ];
       counters.forEach(counter => {
         const row = document.createElement('div');
@@ -1547,7 +1561,7 @@
         const resetButton = document.createElement('button');
         resetButton.type = 'button';
         resetButton.className = 'counter-reset-button';
-        resetButton.textContent = 'Reset';
+        resetButton.textContent = 'Zurücksetzen';
         resetButton.addEventListener('click', () => {
           character.combatCounters[counter.key] = 0;
           saveCharacter();
@@ -1652,15 +1666,15 @@
       page.className = 'page';
       const section = document.createElement('div');
       section.className = 'section';
-      const exportButton = createButton('Export Character', handleExport);
-      const copyButton = createButton('Copy Code', handleCopyCode);
-      const importButton = createButton('Import Character', handleImport);
-      const clearButton = createButton('Clear Save', handleClearSave, 'destructive');
+      const exportButton = createButton('Charakter exportieren', handleExport);
+      const copyButton = createButton('Code kopieren', handleCopyCode);
+      const importButton = createButton('Charakter importieren', handleImport);
+      const clearButton = createButton('Speicher löschen', handleClearSave, 'destructive');
       const textareaWrap = document.createElement('div');
       textareaWrap.className = 'textarea-wrap';
       const textareaLabel = document.createElement('div');
       textareaLabel.className = 'help-text';
-      textareaLabel.textContent = 'Paste a share code here to import it, or export one below.';
+      textareaLabel.textContent = 'Füge hier einen Share-Code ein, um ihn zu importieren, oder exportiere einen unten.';
       const textarea = document.createElement('textarea');
       textarea.id = 'shareCodeArea';
       textarea.placeholder = 'INK1:...';
@@ -1713,29 +1727,29 @@
       const shareCodeArea = document.getElementById('shareCodeArea');
       const exportText = createCharacterCode(character);
       shareCodeArea.value = exportText;
-      statusBar.textContent = 'Character share code generated.';
+      statusBar.textContent = 'Charakter-Share-Code wurde erstellt.';
     }
 
     function handleCopyCode() {
       const shareCodeArea = document.getElementById('shareCodeArea');
       const code = (shareCodeArea.value || '').trim();
       if (!code) {
-        statusBar.textContent = 'Export a character first to create a share code.';
+        statusBar.textContent = 'Exportiere zuerst einen Charakter, um einen Share-Code zu erstellen.';
         return;
       }
       copyText(code);
-      statusBar.textContent = 'Share code copied to clipboard.';
+      statusBar.textContent = 'Share-Code in die Zwischenablage kopiert.';
     }
 
     function handleImport() {
       const shareCodeArea = document.getElementById('shareCodeArea');
       const code = (shareCodeArea.value || '').trim();
       if (!code) {
-        statusBar.textContent = 'Enter a share code to import.';
+        statusBar.textContent = 'Gib einen Share-Code zum Importieren ein.';
         return;
       }
       if (!validateCharacterCode(code)) {
-        statusBar.textContent = 'Invalid share code. Please check the code and try again.';
+        statusBar.textContent = 'Ungültiger Share-Code. Bitte überprüfe den Code und versuche es erneut.';
         return;
       }
       try {
@@ -1744,9 +1758,9 @@
         character = mergeCharacter(characterTemplate, parsed);
         renderAll();
         saveCharacter();
-        statusBar.textContent = 'Character imported successfully.';
+        statusBar.textContent = 'Charakter erfolgreich importiert.';
       } catch (error) {
-        statusBar.textContent = 'Unable to import character. The share code may be invalid.';
+        statusBar.textContent = 'Charakter konnte nicht importiert werden. Der Share-Code ist möglicherweise ungültig.';
       }
     }
 
@@ -1755,7 +1769,7 @@
       character = JSON.parse(JSON.stringify(characterTemplate));
       renderAll();
       saveCharacter();
-      statusBar.textContent = 'Save cleared. Template restored.';
+      statusBar.textContent = 'Speicher gelöscht. Vorlage wiederhergestellt.';
     }
 
     function copyText(text) {
@@ -1794,10 +1808,10 @@
       header.className = 'spell-header';
       const title = document.createElement('div');
       title.className = 'spell-title';
-      title.textContent = 'Spell Slots';
+      title.textContent = 'Zauberplätze';
       const subtitle = document.createElement('div');
       subtitle.className = 'spell-subtitle';
-      subtitle.textContent = `Spellcasting: ${info.type} (${info.subclass})`;
+      subtitle.textContent = `Zaubern: ${info.type} (${info.subclass})`;
       header.append(title, subtitle);
       const table = document.createElement('div');
       table.className = 'spell-table';
@@ -1806,15 +1820,15 @@
       if (visibleLevels.length === 0) {
         const noSlots = document.createElement('div');
         noSlots.className = 'spell-no-slots';
-        noSlots.textContent = 'No spell slots available at this character level.';
+        noSlots.textContent = 'Auf dieser Stufe sind keine Zauberplätze verfügbar.';
         table.appendChild(noSlots);
       } else {
         visibleLevels.forEach(level => table.appendChild(createSpellSlotRow(level)));
       }
       const actionRow = document.createElement('div');
       actionRow.className = 'spell-actions';
-      const restoreButton = createButton('Restore All Slots', restoreAllSlots);
-      const clearButton = createButton('Clear All', clearAllSlots);
+      const restoreButton = createButton('Alle Plätze wiederherstellen', restoreAllSlots);
+      const clearButton = createButton('Alle löschen', clearAllSlots);
       actionRow.append(restoreButton, clearButton);
       section.append(header, table, actionRow);
       renderSpellSlots();
