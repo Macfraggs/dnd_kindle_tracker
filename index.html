@@ -772,24 +772,24 @@
     const spellLevels = [1, 2, 3, 4, 5];
     const abilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
     const skillDefinitions = [
-      { name: 'Akrobatik', ability: 'DEX' },
-      { name: 'Mit Tieren umg.', ability: 'WIS' },
-      { name: 'Arcane Kunde', ability: 'INT' },
-      { name: 'Athletik', ability: 'STR' },
-      { name: 'Täuschen', ability: 'CHA' },
-      { name: 'Geschichte', ability: 'INT' },
-      { name: 'Motiv Erkennen', ability: 'WIS' },
-      { name: 'Einschüchtern', ability: 'CHA' },
-      { name: 'Nachforschungen', ability: 'INT' },
-      { name: 'Heilkunde', ability: 'WIS' },
-      { name: 'Naturkunde', ability: 'INT' },
-      { name: 'Wahrnehmung', ability: 'WIS' },
-      { name: 'Auftreten', ability: 'CHA' },
-      { name: 'Überzeugen', ability: 'CHA' },
+      { name: 'Acrobatics', ability: 'DEX' },
+      { name: 'Animal Handling', ability: 'WIS' },
+      { name: 'Arcana', ability: 'INT' },
+      { name: 'Athletics', ability: 'STR' },
+      { name: 'Deception', ability: 'CHA' },
+      { name: 'History', ability: 'INT' },
+      { name: 'Insight', ability: 'WIS' },
+      { name: 'Intimidation', ability: 'CHA' },
+      { name: 'Investigation', ability: 'INT' },
+      { name: 'Medicine', ability: 'WIS' },
+      { name: 'Nature', ability: 'INT' },
+      { name: 'Perception', ability: 'WIS' },
+      { name: 'Performance', ability: 'CHA' },
+      { name: 'Persuasion', ability: 'CHA' },
       { name: 'Religion', ability: 'INT' },
-      { name: 'Fingerfertigkeit', ability: 'DEX' },
-      { name: 'Heimlichkeit', ability: 'DEX' },
-      { name: 'Überlebenskunst', ability: 'WIS' },
+      { name: 'Sleight of Hand', ability: 'DEX' },
+      { name: 'Stealth', ability: 'DEX' },
+      { name: 'Survival', ability: 'WIS' },
     ];
     const halfCasterClasses = ['artificer', 'paladin', 'ranger'];
     const halfCasterProgression = {
@@ -911,7 +911,7 @@
 
     function createPageNavigation() {
       pages.forEach((pageName, index) => {
-        if (pageName === 'Combat Counters') return;
+        if (pageName === 'Combat Counters' || pageName === 'Kampfzähler') return;
         const button = createButton(pageName, () => switchPage(index));
         if (index === currentPage) button.classList.add('active');
         navButtons.appendChild(button);
