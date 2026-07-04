@@ -165,16 +165,16 @@
       width: 100%;
     }
     .stats-page {
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: hidden;
     }
     .stats-section {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      overflow-y: auto;
-      overflow-x: hidden;
+      gap: 6px;
+      overflow: hidden;
       min-height: 100%;
+      position: relative;
+      flex: 1;
     }
     .stats-card {
       border: 2px solid #000;
@@ -227,25 +227,25 @@
     }
     .ability-row {
       display: grid;
-      grid-template-columns: 44px 64px 64px 74px auto;
+      grid-template-columns: 42px 58px 42px auto auto;
       gap: 6px;
       align-items: center;
-      min-height: 44px;
+      min-height: 38px;
     }
     .ability-name {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
     }
     .stats-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 42px;
+      min-height: 34px;
       border: 2px solid #000;
-      padding: 0 8px;
+      padding: 0 6px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       background: #fff;
       color: #000;
       white-space: nowrap;
@@ -293,62 +293,115 @@
       accent-color: #000;
       margin: 0;
     }
-    .skill-group {
-      border: 1px solid #000;
-      padding: 6px;
+    .ability-skill-btn {
+      min-height: 38px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px 8px;
+      white-space: nowrap;
+    }
+    .skill-subpage {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      border: 2px solid #000;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 5;
+      overflow: hidden;
+    }
+    .skill-subpage.active {
+      display: flex;
+    }
+    .skill-subpage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 700;
+      min-height: 40px;
+    }
+    .skill-subpage-title {
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .skill-subpage-list {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      background: #fff;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding-right: 2px;
     }
     .skill-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 6px;
+      grid-template-columns: 1fr auto auto;
       align-items: center;
-      min-height: 38px;
-      padding: 2px 0;
-      border-bottom: 1px solid #000;
+      gap: 12px;
+      min-height: 90px;
+      padding: 12px 14px;
+      border: 2px solid #000;
+      background: #fff;
     }
-    .skill-row:last-child {
-      border-bottom: none;
+    .skill-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
     }
     .skill-title {
       display: flex;
-      align-items: baseline;
-      gap: 4px;
+      flex-direction: column;
+      gap: 2px;
       min-width: 0;
-      overflow: hidden;
     }
     .skill-name {
-      font-weight: 700;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 800;
+      font-size: 0.98rem;
+      line-height: 1.2;
     }
     .skill-ability {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: #000;
-      white-space: nowrap;
+      font-weight: 600;
     }
     .skill-bonus {
-      min-width: 38px;
+      min-width: 64px;
+      width: 64px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      font-weight: 700;
-      font-size: 0.95rem;
-      padding: 4px 6px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      border: 2px solid #000;
+      background: #fff;
+      align-self: center;
     }
     .skill-state-button {
       border: 2px solid #000;
       background: #fff;
       color: #000;
-      font-size: 0.78rem;
-      font-weight: 700;
+      font-size: 0.82rem;
+      font-weight: 800;
       cursor: pointer;
-      padding: 4px 6px;
-      min-height: 32px;
+      padding: 10px 10px;
+      min-height: 48px;
+      min-width: 100px;
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      align-self: center;
     }
     .passive-card {
       border: 2px solid #000;
@@ -897,21 +950,6 @@
     function populateStatsSection(section) {
       section.innerHTML = '';
 
-      const toggleRow = document.createElement('div');
-      toggleRow.className = 'stats-toggle-row';
-      const coreButton = document.createElement('button');
-      coreButton.type = 'button';
-      coreButton.className = 'stats-toggle-btn active';
-      coreButton.textContent = 'Stats';
-      coreButton.addEventListener('click', () => switchStatsView('stats'));
-      const skillsButton = document.createElement('button');
-      skillsButton.type = 'button';
-      skillsButton.className = 'stats-toggle-btn';
-      skillsButton.textContent = 'Skills';
-      skillsButton.addEventListener('click', () => switchStatsView('skills'));
-      toggleRow.append(coreButton, skillsButton);
-      section.appendChild(toggleRow);
-
       const proficiencyCard = document.createElement('div');
       proficiencyCard.className = 'stats-card';
       const proficiencyTitle = document.createElement('div');
@@ -936,12 +974,6 @@
       proficiencyCard.append(proficiencyTitle, proficiencyRow);
       section.appendChild(proficiencyCard);
 
-      const statsView = document.createElement('div');
-      statsView.dataset.view = 'stats';
-      const skillsView = document.createElement('div');
-      skillsView.dataset.view = 'skills';
-      skillsView.style.display = 'none';
-
       const abilitiesCard = document.createElement('div');
       abilitiesCard.className = 'stats-card';
       const abilitiesTitle = document.createElement('div');
@@ -953,30 +985,30 @@
         abilitiesList.appendChild(createAbilityRow(ability));
       });
       abilitiesCard.append(abilitiesTitle, abilitiesList);
-      statsView.appendChild(abilitiesCard);
+      section.appendChild(abilitiesCard);
 
-      const skillsCard = document.createElement('div');
-      skillsCard.className = 'stats-card';
-      const skillsList = document.createElement('div');
-      skillsList.className = 'stats-list';
-      abilityNames.forEach(ability => {
-        const abilityGroup = document.createElement('div');
-        abilityGroup.className = 'skill-group';
-        const groupList = document.createElement('div');
-        groupList.className = 'stats-list';
-        skillDefinitions
-          .filter(skill => skill.ability === ability)
-          .forEach(skill => {
-            groupList.appendChild(createSkillRow(skill));
-          });
-        abilityGroup.appendChild(groupList);
-        skillsList.appendChild(abilityGroup);
+      const skillsSubpage = document.createElement('div');
+      skillsSubpage.className = 'skill-subpage';
+      skillsSubpage.dataset.role = 'skill-subpage';
+      const subpageHeader = document.createElement('div');
+      subpageHeader.className = 'skill-subpage-header';
+      const subpageTitle = document.createElement('div');
+      subpageTitle.dataset.role = 'skill-subpage-title';
+      subpageTitle.textContent = 'Skills';
+      const closeButton = document.createElement('button');
+      closeButton.type = 'button';
+      closeButton.className = 'ability-skill-btn';
+      closeButton.textContent = '← Back to Stats';
+      closeButton.addEventListener('click', () => {
+        section.querySelector('[data-role="skill-subpage"]').classList.remove('active');
+        section.dataset.activeAbility = '';
       });
-      skillsCard.appendChild(skillsList);
-      skillsView.appendChild(skillsCard);
-
-      section.appendChild(statsView);
-      section.appendChild(skillsView);
+      subpageHeader.append(subpageTitle, closeButton);
+      const subpageList = document.createElement('div');
+      subpageList.className = 'skill-subpage-list';
+      subpageList.dataset.role = 'skill-subpage-list';
+      skillsSubpage.append(subpageHeader, subpageList);
+      section.appendChild(skillsSubpage);
     }
 
     function createAbilityRow(ability) {
@@ -1005,10 +1037,6 @@
       modifier.className = 'stats-badge';
       modifier.dataset.role = 'modifier';
 
-      const saveBonus = document.createElement('div');
-      saveBonus.className = 'stats-badge secondary';
-      saveBonus.dataset.role = 'save-bonus';
-
       const saveWrap = document.createElement('label');
       saveWrap.className = 'checkbox-wrap';
       const saveCheckbox = document.createElement('input');
@@ -1024,14 +1052,38 @@
       saveLabel.textContent = 'Save';
       saveWrap.append(saveCheckbox, saveLabel);
 
-      row.append(label, scoreInput, modifier, saveBonus, saveWrap);
+      const skillsButton = document.createElement('button');
+      skillsButton.type = 'button';
+      skillsButton.className = 'ability-skill-btn';
+      skillsButton.textContent = 'Skills';
+      skillsButton.addEventListener('click', () => openAbilitySkills(ability));
+
+      row.append(label, scoreInput, modifier, saveWrap, skillsButton);
       return row;
     }
 
+    function openAbilitySkills(ability) {
+      const section = pagesContainer.querySelector('.stats-section');
+      if (!section) return;
+      const subpage = section.querySelector('[data-role="skill-subpage"]');
+      const title = section.querySelector('[data-role="skill-subpage-title"]');
+      const list = section.querySelector('[data-role="skill-subpage-list"]');
+      if (!subpage || !title || !list) return;
+      section.dataset.activeAbility = ability;
+      title.textContent = `${ability} Skills`;
+      const matchingSkills = skillDefinitions.filter(skill => skill.ability === ability);
+      list.innerHTML = '';
+      matchingSkills.forEach(skill => {
+        list.appendChild(createSkillRow(skill));
+      });
+      subpage.classList.add('active');
+      renderStats();
+    }
+
     function getSkillStateText(skillData) {
-      if (skillData.expertise) return '★ Expertise';
-      if (skillData.proficient) return '✓ Proficient';
-      return '□ None';
+      if (skillData.expertise) return 'EXPERTISE';
+      if (skillData.proficient) return 'PROFICIENT';
+      return 'NONE';
     }
 
     function cycleSkillState(skillData) {
@@ -1052,6 +1104,8 @@
       row.className = 'skill-row';
       row.dataset.skill = skill.name;
 
+      const content = document.createElement('div');
+      content.className = 'skill-card-content';
       const title = document.createElement('div');
       title.className = 'skill-title';
       const skillName = document.createElement('div');
@@ -1061,6 +1115,7 @@
       skillAbility.className = 'skill-ability';
       skillAbility.textContent = `(${skill.ability})`;
       title.append(skillName, skillAbility);
+      content.appendChild(title);
 
       const bonus = document.createElement('div');
       bonus.className = 'skill-bonus';
@@ -1079,7 +1134,7 @@
         renderStats();
       });
 
-      row.append(title, bonus, stateButton);
+      row.append(content, bonus, stateButton);
       return row;
     }
 
@@ -1105,21 +1160,6 @@
       return 10 + getSkillBonus(skillName);
     }
 
-    function switchStatsView(view) {
-      const section = pagesContainer.querySelector('.stats-section');
-      if (!section) return;
-      const toggleButtons = section.querySelectorAll('.stats-toggle-btn');
-      toggleButtons.forEach(button => {
-        button.classList.toggle('active', button.textContent.toLowerCase() === view);
-      });
-      const statsView = section.querySelector('[data-view="stats"]');
-      const skillsView = section.querySelector('[data-view="skills"]');
-      if (statsView && skillsView) {
-        statsView.style.display = view === 'stats' ? 'block' : 'none';
-        skillsView.style.display = view === 'skills' ? 'block' : 'none';
-      }
-    }
-
     function renderStats() {
       const section = pagesContainer.querySelector('.stats-section');
       if (!section) return;
@@ -1139,28 +1179,31 @@
         if (modifier) {
           modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
         }
-        const saveBonus = row.querySelector('[data-role="save-bonus"]');
-        if (saveBonus) {
-          saveBonus.textContent = 'Save ' + formatModifier(getSavingThrowBonus(ability));
-        }
         const saveCheckbox = row.querySelector('[data-role="save-checkbox"]');
         if (saveCheckbox) {
           saveCheckbox.checked = character.savingThrows[ability];
         }
       });
 
-      section.querySelectorAll('.skill-row').forEach(row => {
-        const skillName = row.dataset.skill;
-        const skillData = character.skills[skillName];
-        const bonus = row.querySelector('[data-role="skill-bonus"]');
-        if (bonus) {
-          bonus.textContent = formatModifier(getSkillBonus(skillName));
+      const subpage = section.querySelector('[data-role="skill-subpage"]');
+      const activeAbility = section.dataset.activeAbility;
+      if (subpage && activeAbility && subpage.classList.contains('active')) {
+        const list = section.querySelector('[data-role="skill-subpage-list"]');
+        if (list) {
+          list.querySelectorAll('.skill-row').forEach(row => {
+            const skillName = row.dataset.skill;
+            const skillData = character.skills[skillName];
+            const bonus = row.querySelector('[data-role="skill-bonus"]');
+            if (bonus) {
+              bonus.textContent = formatModifier(getSkillBonus(skillName));
+            }
+            const stateButton = row.querySelector('[data-role="skill-state"]');
+            if (stateButton) {
+              stateButton.textContent = getSkillStateText(skillData);
+            }
+          });
         }
-        const stateButton = row.querySelector('[data-role="skill-state"]');
-        if (stateButton) {
-          stateButton.textContent = getSkillStateText(skillData);
-        }
-      });
+      }
     }
 
     function calcModifier(value) {
