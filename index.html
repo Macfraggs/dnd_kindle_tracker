@@ -1343,40 +1343,100 @@
       const section = document.createElement('div');
       section.className = 'section';
       const exportButton = createButton('Export Character', handleExport);
+      const copyButton = createButton('Copy Code', handleCopyCode);
       const importButton = createButton('Import Character', handleImport);
       const clearButton = createButton('Clear Save', handleClearSave, 'destructive');
       const textareaWrap = document.createElement('div');
       textareaWrap.className = 'textarea-wrap';
       const textareaLabel = document.createElement('div');
       textareaLabel.className = 'help-text';
-      textareaLabel.textContent = 'Paste JSON here for import, or copy exported JSON.';
+      textareaLabel.textContent = 'Paste a share code here to import it, or export one below.';
       const textarea = document.createElement('textarea');
-      textarea.id = 'jsonArea';
-      textarea.placeholder = '{ "name": "..." }';
+      textarea.id = 'shareCodeArea';
+      textarea.placeholder = 'INK1:...';
       textareaWrap.append(textareaLabel, textarea);
-      section.append(exportButton, importButton, clearButton, textareaWrap);
+      section.append(exportButton, copyButton, importButton, clearButton, textareaWrap);
       page.appendChild(section);
       return page;
     }
 
+    function createCharacterCode(data) {
+      const json = JSON.stringify(data);
+      const encoded = encodeTextToBase64(json);
+      return `INK1:${encoded}`;
+    }
+
+    function encodeTextToBase64(text) {
+      const utf8Bytes = new TextEncoder().encode(text);
+      let binary = '';
+      utf8Bytes.forEach(byte => {
+        binary += String.fromCharCode(byte);
+      });
+      return btoa(binary);
+    }
+
+    function decodeCharacterCode(code) {
+      if (typeof code !== 'string' || !code.startsWith('INK1:')) {
+        throw new Error('Invalid share code prefix.');
+      }
+      const payload = code.slice('INK1:'.length).trim();
+      if (!payload) {
+        throw new Error('Share code is empty.');
+      }
+      const binary = atob(payload);
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function validateCharacterCode(code) {
+      if (typeof code !== 'string') return false;
+      try {
+        const decoded = decodeCharacterCode(code);
+        const parsed = JSON.parse(decoded);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed);
+      } catch (error) {
+        return false;
+      }
+    }
+
     function handleExport() {
-      const jsonArea = document.getElementById('jsonArea');
-      const exportText = JSON.stringify(character, null, 2);
-      jsonArea.value = exportText;
-      copyText(exportText);
-      statusBar.textContent = 'Character JSON copied to clipboard and shown below.';
+      const shareCodeArea = document.getElementById('shareCodeArea');
+      const exportText = createCharacterCode(character);
+      shareCodeArea.value = exportText;
+      statusBar.textContent = 'Character share code generated.';
+    }
+
+    function handleCopyCode() {
+      const shareCodeArea = document.getElementById('shareCodeArea');
+      const code = (shareCodeArea.value || '').trim();
+      if (!code) {
+        statusBar.textContent = 'Export a character first to create a share code.';
+        return;
+      }
+      copyText(code);
+      statusBar.textContent = 'Share code copied to clipboard.';
     }
 
     function handleImport() {
-      const jsonArea = document.getElementById('jsonArea');
+      const shareCodeArea = document.getElementById('shareCodeArea');
+      const code = (shareCodeArea.value || '').trim();
+      if (!code) {
+        statusBar.textContent = 'Enter a share code to import.';
+        return;
+      }
+      if (!validateCharacterCode(code)) {
+        statusBar.textContent = 'Invalid share code. Please check the code and try again.';
+        return;
+      }
       try {
-        const parsed = JSON.parse(jsonArea.value);
+        const decoded = decodeCharacterCode(code);
+        const parsed = JSON.parse(decoded);
         character = mergeCharacter(characterTemplate, parsed);
         renderAll();
         saveCharacter();
         statusBar.textContent = 'Character imported successfully.';
       } catch (error) {
-        statusBar.textContent = 'Invalid JSON import. Check your data.';
+        statusBar.textContent = 'Unable to import character. The share code may be invalid.';
       }
     }
 
