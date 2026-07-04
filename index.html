@@ -194,6 +194,24 @@
       gap: 8px;
       align-items: center;
     }
+    .stats-toggle-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stats-toggle-btn {
+      min-height: 44px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .stats-toggle-btn.active {
+      background: #000;
+      color: #fff;
+    }
     .stats-input {
       width: 100%;
       min-height: 44px;
@@ -232,6 +250,31 @@
     }
     .stats-badge.secondary {
       font-size: 0.9rem;
+    }
+    .other-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .other-stats-item {
+      border: 2px solid #000;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: #fff;
+      min-height: 52px;
+    }
+    .other-stats-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .other-stats-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      word-break: break-word;
     }
     .checkbox-wrap {
       display: inline-flex;
@@ -778,6 +821,21 @@
     function populateStatsSection(section) {
       section.innerHTML = '';
 
+      const toggleRow = document.createElement('div');
+      toggleRow.className = 'stats-toggle-row';
+      const coreButton = document.createElement('button');
+      coreButton.type = 'button';
+      coreButton.className = 'stats-toggle-btn active';
+      coreButton.textContent = 'Stats';
+      coreButton.addEventListener('click', () => switchStatsView('stats'));
+      const skillsButton = document.createElement('button');
+      skillsButton.type = 'button';
+      skillsButton.className = 'stats-toggle-btn';
+      skillsButton.textContent = 'Skills';
+      skillsButton.addEventListener('click', () => switchStatsView('skills'));
+      toggleRow.append(coreButton, skillsButton);
+      section.appendChild(toggleRow);
+
       const proficiencyCard = document.createElement('div');
       proficiencyCard.className = 'stats-card';
       const proficiencyTitle = document.createElement('div');
@@ -802,6 +860,12 @@
       proficiencyCard.append(proficiencyTitle, proficiencyRow);
       section.appendChild(proficiencyCard);
 
+      const statsView = document.createElement('div');
+      statsView.dataset.view = 'stats';
+      const skillsView = document.createElement('div');
+      skillsView.dataset.view = 'skills';
+      skillsView.style.display = 'none';
+
       const abilitiesCard = document.createElement('div');
       abilitiesCard.className = 'stats-card';
       const abilitiesTitle = document.createElement('div');
@@ -813,7 +877,7 @@
         abilitiesList.appendChild(createAbilityRow(ability));
       });
       abilitiesCard.append(abilitiesTitle, abilitiesList);
-      section.appendChild(abilitiesCard);
+      statsView.appendChild(abilitiesCard);
 
       const skillsCard = document.createElement('div');
       skillsCard.className = 'stats-card';
@@ -822,11 +886,24 @@
       skillsTitle.textContent = 'Skills';
       const skillsList = document.createElement('div');
       skillsList.className = 'stats-list';
-      skillDefinitions.forEach(skill => {
-        skillsList.appendChild(createSkillRow(skill));
+      abilityNames.forEach(ability => {
+        const abilityGroup = document.createElement('div');
+        abilityGroup.className = 'stats-card';
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'stats-card-title';
+        groupTitle.textContent = ability;
+        const groupList = document.createElement('div');
+        groupList.className = 'stats-list';
+        skillDefinitions
+          .filter(skill => skill.ability === ability)
+          .forEach(skill => {
+            groupList.appendChild(createSkillRow(skill));
+          });
+        abilityGroup.append(groupTitle, groupList);
+        skillsList.appendChild(abilityGroup);
       });
       skillsCard.append(skillsTitle, skillsList);
-      section.appendChild(skillsCard);
+      skillsView.appendChild(skillsCard);
 
       const passiveCard = document.createElement('div');
       passiveCard.className = 'stats-card';
@@ -849,7 +926,10 @@
         row.append(label, value);
         passiveCard.appendChild(row);
       });
-      section.appendChild(passiveCard);
+      statsView.appendChild(passiveCard);
+
+      section.appendChild(statsView);
+      section.appendChild(skillsView);
     }
 
     function createAbilityRow(ability) {
@@ -984,6 +1064,21 @@
 
     function getPassiveScore(skillName) {
       return 10 + getSkillBonus(skillName);
+    }
+
+    function switchStatsView(view) {
+      const section = pagesContainer.querySelector('.stats-section');
+      if (!section) return;
+      const toggleButtons = section.querySelectorAll('.stats-toggle-btn');
+      toggleButtons.forEach(button => {
+        button.classList.toggle('active', button.textContent.toLowerCase() === view);
+      });
+      const statsView = section.querySelector('[data-view="stats"]');
+      const skillsView = section.querySelector('[data-view="skills"]');
+      if (statsView && skillsView) {
+        statsView.style.display = view === 'stats' ? 'block' : 'none';
+        skillsView.style.display = view === 'skills' ? 'block' : 'none';
+      }
     }
 
     function renderStats() {
