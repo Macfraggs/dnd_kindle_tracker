@@ -164,6 +164,128 @@
       align-items: center;
       width: 100%;
     }
+    .stats-page {
+      overflow: hidden;
+    }
+    .stats-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .stats-card {
+      border: 2px solid #000;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #fff;
+    }
+    .stats-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .stats-proficiency-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .stats-input {
+      width: 100%;
+      min-height: 44px;
+      border: 2px solid #000;
+      padding: 8px 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: #fff;
+      color: #000;
+      text-align: center;
+    }
+    .ability-row {
+      display: grid;
+      grid-template-columns: 44px 64px 64px 74px auto;
+      gap: 6px;
+      align-items: center;
+      min-height: 44px;
+    }
+    .ability-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+    }
+    .stats-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 2px solid #000;
+      padding: 0 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: #fff;
+      color: #000;
+      white-space: nowrap;
+    }
+    .stats-badge.secondary {
+      font-size: 0.9rem;
+    }
+    .checkbox-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      justify-content: flex-end;
+    }
+    .checkbox-wrap input {
+      width: 20px;
+      height: 20px;
+      accent-color: #000;
+      margin: 0;
+    }
+    .skill-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 60px 72px 72px;
+      gap: 6px;
+      align-items: center;
+      min-height: 44px;
+    }
+    .skill-title {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+    .skill-name {
+      font-weight: 700;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .skill-ability {
+      font-size: 0.78rem;
+      color: #000;
+    }
+    .passive-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      min-height: 42px;
+    }
+    .passive-value {
+      border: 2px solid #000;
+      padding: 8px 10px;
+      min-width: 56px;
+      text-align: center;
+      background: #fff;
+    }
     .card {
       display: flex;
       flex-direction: column;
@@ -441,6 +563,27 @@
     };
     const moneyKeys = ['PP', 'GP', 'SP', 'CP'];
     const spellLevels = [1, 2, 3, 4, 5];
+    const abilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+    const skillDefinitions = [
+      { name: 'Acrobatics', ability: 'DEX' },
+      { name: 'Animal Handling', ability: 'WIS' },
+      { name: 'Arcana', ability: 'INT' },
+      { name: 'Athletics', ability: 'STR' },
+      { name: 'Deception', ability: 'CHA' },
+      { name: 'History', ability: 'INT' },
+      { name: 'Insight', ability: 'WIS' },
+      { name: 'Intimidation', ability: 'CHA' },
+      { name: 'Investigation', ability: 'INT' },
+      { name: 'Medicine', ability: 'WIS' },
+      { name: 'Nature', ability: 'INT' },
+      { name: 'Perception', ability: 'WIS' },
+      { name: 'Performance', ability: 'CHA' },
+      { name: 'Persuasion', ability: 'CHA' },
+      { name: 'Religion', ability: 'INT' },
+      { name: 'Sleight of Hand', ability: 'DEX' },
+      { name: 'Stealth', ability: 'DEX' },
+      { name: 'Survival', ability: 'WIS' },
+    ];
     const halfCasterClasses = ['artificer', 'paladin', 'ranger'];
     const halfCasterProgression = {
       1: {},
@@ -478,6 +621,13 @@
         WIS: 10,
         CHA: 10,
       },
+      proficiencyBonus: 2,
+      savingThrows: Object.fromEntries(abilityNames.map(ability => [ability, false])),
+      skills: Object.fromEntries(skillDefinitions.map(skill => [skill.name, {
+        ability: skill.ability,
+        proficient: false,
+        expertise: false,
+      }])),
       health: {
         current: 10,
         max: 10,
@@ -616,54 +766,278 @@
 
     function buildStatsPage() {
       const page = document.createElement('section');
-      page.className = 'page';
+      page.className = 'page stats-page';
       const section = document.createElement('div');
-      section.className = 'section';
-      const statNames = Object.keys(character.stats);
-      statNames.forEach(stat => {
-        section.appendChild(createStatRow(stat));
-      });
+      section.className = 'section stats-section';
       page.appendChild(section);
+      populateStatsSection(section);
       return page;
     }
 
-    function createStatRow(stat) {
+    function populateStatsSection(section) {
+      section.innerHTML = '';
+
+      const proficiencyCard = document.createElement('div');
+      proficiencyCard.className = 'stats-card';
+      const proficiencyTitle = document.createElement('div');
+      proficiencyTitle.className = 'stats-card-title';
+      proficiencyTitle.textContent = 'Proficiency Bonus';
+      const proficiencyRow = document.createElement('div');
+      proficiencyRow.className = 'stats-proficiency-row';
+      const proficiencyInput = document.createElement('input');
+      proficiencyInput.type = 'number';
+      proficiencyInput.className = 'stats-input';
+      proficiencyInput.min = '1';
+      proficiencyInput.max = '12';
+      proficiencyInput.value = character.proficiencyBonus;
+      proficiencyInput.dataset.role = 'proficiency-input';
+      proficiencyInput.addEventListener('input', () => {
+        character.proficiencyBonus = Math.max(1, Math.min(12, Number(proficiencyInput.value) || 1));
+        proficiencyInput.value = character.proficiencyBonus;
+        saveCharacter();
+        renderStats();
+      });
+      proficiencyRow.appendChild(proficiencyInput);
+      proficiencyCard.append(proficiencyTitle, proficiencyRow);
+      section.appendChild(proficiencyCard);
+
+      const abilitiesCard = document.createElement('div');
+      abilitiesCard.className = 'stats-card';
+      const abilitiesTitle = document.createElement('div');
+      abilitiesTitle.className = 'stats-card-title';
+      abilitiesTitle.textContent = 'Ability Scores';
+      const abilitiesList = document.createElement('div');
+      abilitiesList.className = 'stats-list';
+      abilityNames.forEach(ability => {
+        abilitiesList.appendChild(createAbilityRow(ability));
+      });
+      abilitiesCard.append(abilitiesTitle, abilitiesList);
+      section.appendChild(abilitiesCard);
+
+      const skillsCard = document.createElement('div');
+      skillsCard.className = 'stats-card';
+      const skillsTitle = document.createElement('div');
+      skillsTitle.className = 'stats-card-title';
+      skillsTitle.textContent = 'Skills';
+      const skillsList = document.createElement('div');
+      skillsList.className = 'stats-list';
+      skillDefinitions.forEach(skill => {
+        skillsList.appendChild(createSkillRow(skill));
+      });
+      skillsCard.append(skillsTitle, skillsList);
+      section.appendChild(skillsCard);
+
+      const passiveCard = document.createElement('div');
+      passiveCard.className = 'stats-card';
+      const passiveTitle = document.createElement('div');
+      passiveTitle.className = 'stats-card-title';
+      passiveTitle.textContent = 'Passive Scores';
+      passiveCard.appendChild(passiveTitle);
+      [
+        { label: 'Passive Perception', skill: 'Perception' },
+        { label: 'Passive Investigation', skill: 'Investigation' },
+        { label: 'Passive Insight', skill: 'Insight' },
+      ].forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'passive-row';
+        const label = document.createElement('div');
+        label.textContent = item.label;
+        const value = document.createElement('div');
+        value.className = 'passive-value';
+        value.textContent = getPassiveScore(item.skill);
+        row.append(label, value);
+        passiveCard.appendChild(row);
+      });
+      section.appendChild(passiveCard);
+    }
+
+    function createAbilityRow(ability) {
       const row = document.createElement('div');
-      row.className = 'stat-row';
+      row.className = 'ability-row';
+      row.dataset.ability = ability;
+
       const label = document.createElement('div');
-      label.className = 'stat-name';
-      label.textContent = stat;
-      const minus = document.createElement('div');
-      minus.className = 'pill';
-      minus.textContent = '-';
-      minus.addEventListener('click', () => adjustStat(stat, -1));
-      const value = document.createElement('div');
-      value.className = 'stat-value';
-      value.textContent = character.stats[stat];
-      const plus = document.createElement('div');
-      plus.className = 'pill';
-      plus.textContent = '+';
-      plus.addEventListener('click', () => adjustStat(stat, 1));
+      label.className = 'ability-name';
+      label.textContent = ability;
+
+      const scoreInput = document.createElement('input');
+      scoreInput.type = 'number';
+      scoreInput.className = 'stats-input';
+      scoreInput.min = '1';
+      scoreInput.max = '30';
+      scoreInput.value = character.stats[ability];
+      scoreInput.addEventListener('input', () => {
+        character.stats[ability] = Math.max(1, Math.min(30, Number(scoreInput.value) || 1));
+        scoreInput.value = character.stats[ability];
+        saveCharacter();
+        renderStats();
+      });
+
       const modifier = document.createElement('div');
-      modifier.className = 'modifier';
-      modifier.textContent = formatModifier(calcModifier(character.stats[stat]));
-      row.append(label, minus, value, plus, modifier);
-      row.dataset.stat = stat;
+      modifier.className = 'stats-badge';
+      modifier.dataset.role = 'modifier';
+
+      const saveBonus = document.createElement('div');
+      saveBonus.className = 'stats-badge secondary';
+      saveBonus.dataset.role = 'save-bonus';
+
+      const saveWrap = document.createElement('label');
+      saveWrap.className = 'checkbox-wrap';
+      const saveCheckbox = document.createElement('input');
+      saveCheckbox.type = 'checkbox';
+      saveCheckbox.dataset.role = 'save-checkbox';
+      saveCheckbox.checked = character.savingThrows[ability];
+      saveCheckbox.addEventListener('change', () => {
+        character.savingThrows[ability] = saveCheckbox.checked;
+        saveCharacter();
+        renderStats();
+      });
+      const saveLabel = document.createElement('span');
+      saveLabel.textContent = 'Save';
+      saveWrap.append(saveCheckbox, saveLabel);
+
+      row.append(label, scoreInput, modifier, saveBonus, saveWrap);
       return row;
     }
 
-    function adjustStat(stat, delta) {
-      character.stats[stat] = Math.max(1, character.stats[stat] + delta);
-      renderStats();
-      saveCharacter();
+    function createSkillRow(skill) {
+      const row = document.createElement('div');
+      row.className = 'skill-row';
+      row.dataset.skill = skill.name;
+
+      const title = document.createElement('div');
+      title.className = 'skill-title';
+      const skillName = document.createElement('div');
+      skillName.className = 'skill-name';
+      skillName.textContent = skill.name;
+      const skillAbility = document.createElement('div');
+      skillAbility.className = 'skill-ability';
+      skillAbility.textContent = `(${skill.ability})`;
+      title.append(skillName, skillAbility);
+
+      const bonus = document.createElement('div');
+      bonus.className = 'stats-badge';
+      bonus.dataset.role = 'skill-bonus';
+
+      const proficiencyWrap = document.createElement('label');
+      proficiencyWrap.className = 'checkbox-wrap';
+      const proficiencyCheckbox = document.createElement('input');
+      proficiencyCheckbox.type = 'checkbox';
+      proficiencyCheckbox.dataset.role = 'proficiency';
+      proficiencyCheckbox.checked = character.skills[skill.name].proficient;
+      proficiencyCheckbox.addEventListener('change', () => {
+        const skillData = character.skills[skill.name];
+        skillData.proficient = proficiencyCheckbox.checked;
+        if (!skillData.proficient) {
+          skillData.expertise = false;
+        }
+        saveCharacter();
+        renderStats();
+      });
+      const proficiencyLabel = document.createElement('span');
+      proficiencyLabel.textContent = 'Prof';
+      proficiencyWrap.append(proficiencyCheckbox, proficiencyLabel);
+
+      const expertiseWrap = document.createElement('label');
+      expertiseWrap.className = 'checkbox-wrap';
+      const expertiseCheckbox = document.createElement('input');
+      expertiseCheckbox.type = 'checkbox';
+      expertiseCheckbox.dataset.role = 'expertise';
+      expertiseCheckbox.checked = character.skills[skill.name].expertise;
+      expertiseCheckbox.addEventListener('change', () => {
+        const skillData = character.skills[skill.name];
+        if (expertiseCheckbox.checked) {
+          skillData.proficient = true;
+          skillData.expertise = true;
+        } else {
+          skillData.expertise = false;
+        }
+        saveCharacter();
+        renderStats();
+      });
+      const expertiseLabel = document.createElement('span');
+      expertiseLabel.textContent = 'Exp';
+      expertiseWrap.append(expertiseCheckbox, expertiseLabel);
+
+      row.append(title, bonus, proficiencyWrap, expertiseWrap);
+      return row;
+    }
+
+    function getSkillBonus(skillName) {
+      const skillData = character.skills[skillName];
+      const abilityMod = calcModifier(character.stats[skillData.ability]);
+      let bonus = abilityMod;
+      if (skillData.proficient) {
+        bonus += character.proficiencyBonus;
+      }
+      if (skillData.expertise) {
+        bonus += character.proficiencyBonus;
+      }
+      return bonus;
+    }
+
+    function getSavingThrowBonus(ability) {
+      const abilityMod = calcModifier(character.stats[ability]);
+      return character.savingThrows[ability] ? abilityMod + character.proficiencyBonus : abilityMod;
+    }
+
+    function getPassiveScore(skillName) {
+      return 10 + getSkillBonus(skillName);
     }
 
     function renderStats() {
-      const rows = pagesContainer.querySelectorAll('.stat-row');
-      rows.forEach(row => {
-        const stat = row.dataset.stat;
-        row.querySelector('.stat-value').textContent = character.stats[stat];
-        row.querySelector('.modifier').textContent = formatModifier(calcModifier(character.stats[stat]));
+      const section = pagesContainer.querySelector('.stats-section');
+      if (!section) return;
+
+      const proficiencyInput = section.querySelector('[data-role="proficiency-input"]');
+      if (proficiencyInput) {
+        proficiencyInput.value = character.proficiencyBonus;
+      }
+
+      section.querySelectorAll('.ability-row').forEach(row => {
+        const ability = row.dataset.ability;
+        const scoreInput = row.querySelector('input[type="number"]');
+        if (scoreInput) {
+          scoreInput.value = character.stats[ability];
+        }
+        const modifier = row.querySelector('[data-role="modifier"]');
+        if (modifier) {
+          modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
+        }
+        const saveBonus = row.querySelector('[data-role="save-bonus"]');
+        if (saveBonus) {
+          saveBonus.textContent = 'Save ' + formatModifier(getSavingThrowBonus(ability));
+        }
+        const saveCheckbox = row.querySelector('[data-role="save-checkbox"]');
+        if (saveCheckbox) {
+          saveCheckbox.checked = character.savingThrows[ability];
+        }
+      });
+
+      section.querySelectorAll('.skill-row').forEach(row => {
+        const skillName = row.dataset.skill;
+        const skillData = character.skills[skillName];
+        const bonus = row.querySelector('[data-role="skill-bonus"]');
+        if (bonus) {
+          bonus.textContent = formatModifier(getSkillBonus(skillName));
+        }
+        const proficiencyCheckbox = row.querySelector('[data-role="proficiency"]');
+        if (proficiencyCheckbox) {
+          proficiencyCheckbox.checked = skillData.proficient;
+        }
+        const expertiseCheckbox = row.querySelector('[data-role="expertise"]');
+        if (expertiseCheckbox) {
+          expertiseCheckbox.checked = skillData.expertise;
+        }
+      });
+
+      section.querySelectorAll('.passive-row').forEach(row => {
+        const value = row.querySelector('.passive-value');
+        if (value) {
+          const label = row.firstElementChild.textContent;
+          const skillName = label.includes('Perception') ? 'Perception' : label.includes('Investigation') ? 'Investigation' : 'Insight';
+          value.textContent = getPassiveScore(skillName);
+        }
       });
     }
 
