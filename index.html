@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>InkSheet</title>
   <style>
-    /* Core page styling */
     :root {
       color-scheme: dark;
       color: #000;
@@ -13,9 +12,7 @@
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 16px;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
@@ -34,9 +31,6 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      width: min(100%, 760px);
-      max-width: 760px;
-      margin: 0 auto;
       width: 100vw;
       max-width: 100vw;
       margin: 0;
@@ -47,81 +41,70 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border: 2px solid #000;
       background: #fff;
       font-weight: 700;
-      font-size: 1.1rem;
-      min-height: 48px;
+      min-height: 54px;
     }
-    header .logo {
-      letter-spacing: 0.08em;
-    }
-    header .page-title {
-      text-align: right;
-      font-size: 0.95rem;
-    }
-    .page-nav {
+    .logo { letter-spacing: 0.08em; font-size: 1.1rem; }
+    .page-title { text-align: right; font-size: 0.95rem; }
+    .section-nav, .subpage-nav {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      justify-content: center;
     }
-    .page-nav button {
-      flex: 1 1 31%;
-      max-width: 220px;
-      min-height: 44px;
+    .section-nav button, .subpage-nav button, .large-button, .pill, .small-pill, .inline-pill {
       border: 2px solid #000;
       background: #fff;
       color: #000;
-      font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
+      user-select: none;
+    }
+    .section-nav button {
+      flex: 1 1 0;
+      min-height: 54px;
+      font-size: 0.98rem;
       padding: 10px 8px;
     }
-    .page-nav button.active {
+    .section-nav button.active, .subpage-nav button.active {
       background: #000;
       color: #fff;
     }
-    .page-container {
-      display: flex;
-      flex-direction: column;
+    .subpage-nav button {
+      flex: 1 1 0;
+      min-height: 44px;
+      font-size: 0.9rem;
+      padding: 8px 6px;
+    }
+    .content-shell {
       flex: 1;
       min-height: 0;
-    }
-    .page {
-      flex: 1;
-      display: none;
+      display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 10px 0;
-      overflow: hidden;
-      min-height: 0;
-    }
-    .page.active {
-      display: flex;
-    }
-    .section {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
       border: 2px solid #000;
       padding: 10px;
       background: #fff;
+    }
+    .panel {
       flex: 1;
       min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
     }
-    .field-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
+    .stack { display: flex; flex-direction: column; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .field {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
-    label {
+    label, .label-text {
       font-size: 0.9rem;
       font-weight: 700;
     }
@@ -133,339 +116,58 @@
       background: #fff;
       color: #000;
     }
-    input[type="number"] {
-      max-width: 100%;
+    textarea {
+      flex: 1;
+      min-height: 180px;
+      resize: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     }
     .large-button {
       width: 100%;
-      min-height: 48px;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
+      min-height: 50px;
       font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
       padding: 12px;
     }
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .control-group {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-    }
-    .control-group label {
-      flex: 1;
-    }
-    .stat-row, .money-row, .hp-row {
-      display: grid;
-      grid-template-columns: 1fr repeat(5, auto);
-      gap: 4px;
-      align-items: center;
-      width: 100%;
-    }
-    .stats-page {
-      overflow: hidden;
-    }
-    .stats-section {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      overflow: hidden;
-      min-height: 100%;
-      position: relative;
-      flex: 1;
-      width: 100%;
-    }
-    .stats-card {
-      border: 2px solid #000;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: #fff;
-    }
-    .stats-card-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .stats-proficiency-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-    .stats-toggle-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .stats-toggle-btn {
-      min-height: 44px;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 8px;
-    }
-    .stats-toggle-btn.active {
-      background: #000;
-      color: #fff;
-    }
-    .stats-input {
-      width: 100%;
-      min-height: 44px;
-      border: 2px solid #000;
-      padding: 8px 10px;
-      font-size: 1rem;
-      font-weight: 700;
-      background: #fff;
-      color: #000;
-      text-align: center;
-    }
-    .ability-row {
-      display: grid;
-      grid-template-columns: 42px 58px 42px auto auto;
-      gap: 6px;
-      align-items: center;
-      min-height: 38px;
-    }
-    .ability-name {
-      font-weight: 700;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-    }
-    .stats-badge {
+    .pill, .small-pill, .inline-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 34px;
-      border: 2px solid #000;
-      padding: 0 6px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      background: #fff;
-      color: #000;
-      white-space: nowrap;
+      font-size: 1rem;
+      padding: 0 10px;
+      min-height: 46px;
     }
-    .stats-badge.secondary {
-      font-size: 0.9rem;
+    .pill {
+      width: 54px;
+      min-width: 54px;
+      font-size: 1.25rem;
     }
-    .other-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 6px;
+    .small-pill {
+      min-width: 54px;
+      padding: 0 8px;
     }
-    .other-stats-item {
-      border: 2px solid #000;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      background: #fff;
-      min-height: 52px;
-    }
-    .other-stats-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .other-stats-value {
-      font-size: 0.95rem;
-      font-weight: 700;
-      word-break: break-word;
-    }
-    .checkbox-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      white-space: nowrap;
-      justify-content: flex-end;
-    }
-    .checkbox-wrap input {
-      width: 20px;
-      height: 20px;
-      accent-color: #000;
-      margin: 0;
-    }
-    .ability-skill-btn {
-      min-height: 38px;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 6px 8px;
-      white-space: nowrap;
-    }
-    .skill-subpage {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background: #fff;
-      border: 2px solid #000;
-      padding: 10px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 5;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    .skill-subpage.active {
-      display: flex;
-    }
-    .skill-subpage-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-weight: 700;
+    .inline-pill {
       min-height: 40px;
-    }
-    .skill-subpage-title {
-      font-weight: 800;
-      font-size: 1rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-    .skill-subpage-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto;
-      flex: 1;
-      min-height: 0;
-      padding-right: 2px;
-    }
-    .skill-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      min-height: 90px;
-      padding: 12px 14px;
-      border: 2px solid #000;
-      background: #fff;
-      box-sizing: border-box;
-    }
-    .skill-card-content {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      min-width: 0;
-    }
-    .skill-title {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .skill-name {
-      font-weight: 800;
-      font-size: 0.98rem;
-      line-height: 1.2;
-    }
-    .skill-ability {
-      font-size: 0.8rem;
-      color: #000;
-      font-weight: 600;
-    }
-    .skill-bonus {
-      min-width: 64px;
-      width: 64px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-weight: 800;
-      font-size: 1.1rem;
-      border: 2px solid #000;
-      background: #fff;
-      align-self: center;
-    }
-    .skill-state-button {
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
-      font-size: 0.82rem;
-      font-weight: 800;
-      cursor: pointer;
-      padding: 10px 10px;
-      min-height: 48px;
-      min-width: 100px;
-      white-space: nowrap;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      align-self: center;
-    }
-    .passive-card {
-      border: 2px solid #000;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: #fff;
-      margin-top: 8px;
-    }
-    .passive-card-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .passive-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      min-height: 34px;
-    }
-    .passive-value {
-      border: 2px solid #000;
-      padding: 8px 10px;
-      min-width: 56px;
-      text-align: center;
-      background: #fff;
+      padding: 0 10px;
     }
     .card {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       border: 2px solid #000;
-      padding: 12px;
+      padding: 10px;
       background: #fff;
-      width: 100%;
     }
     .card-title {
       font-weight: 700;
-      text-align: center;
       font-size: 1rem;
+      text-align: center;
     }
     .card-value {
       text-align: center;
       font-size: 2rem;
       font-weight: 900;
       border: 2px solid #000;
-      padding: 16px 12px;
+      padding: 14px 10px;
       background: #fff;
     }
     .card-input {
@@ -480,147 +182,44 @@
     }
     .button-row {
       display: flex;
-      flex-wrap: wrap;
       gap: 8px;
+      flex-wrap: wrap;
       justify-content: center;
     }
-    .card-small-row {
-      display: flex;
-      justify-content: space-between;
+    .stat-row, .ability-row, .skill-row, .resource-row, .inventory-row {
+      display: grid;
+      grid-template-columns: 1.2fr auto auto auto;
       gap: 8px;
       align-items: center;
       width: 100%;
     }
-    .spell-circles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: flex-start;
-      padding-top: 4px;
-    }
-    .combat-counters-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 8px;
-    }
-    .combat-counters-buttons button {
-      width: 100%;
-      min-height: 48px;
-      align-self: stretch;
-    }
-    .combat-counters-totals {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 16px;
-    }
-    .counter-total-row {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      border: 2px solid #000;
-      background: #fff;
-      padding: 12px;
-      min-height: 90px;
-      justify-content: space-between;
-    }
-    .counter-total-row > div {
-      width: 100%;
-    }
-    .counter-reset-button {
-      width: 100%;
-      min-height: 44px;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
+    .stat-row .stat-name, .ability-row .ability-name, .skill-row .skill-name, .resource-row .resource-name, .inventory-row .item-name {
       font-weight: 700;
-      padding: 10px 12px;
-      cursor: pointer;
-      white-space: nowrap;
+      font-size: 0.95rem;
     }
-    @media (max-width: 600px) {
-      .combat-counters-buttons,
-      .combat-counters-totals {
-        grid-template-columns: 1fr;
-      }
-    }
-    .stat-name {
-      font-weight: 700;
-    }
-    .stat-value,
-    .money-value,
-    .hp-value {
-      width: 58px;
+    .stat-value, .modifier-value, .resource-value, .quantity-value {
+      min-width: 58px;
       text-align: center;
-      font-size: 1rem;
       border: 2px solid #000;
       padding: 10px 6px;
       background: #fff;
-    }
-    .pill {
-      width: 48px;
-      min-height: 48px;
-      border: 2px solid #000;
-      background: #fff;
-      font-size: 1.25rem;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-      padding: 0 2px;
-    }
-    .modifier {
-      width: 62px;
-      text-align: center;
-      border: 2px solid #000;
-      padding: 10px 8px;
-      font-size: 1rem;
-      font-weight: 700;
-      background: #fff;
-    }
-    .hp-display {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .hp-box {
-      flex: 1;
-      min-width: 150px;
-      border: 2px solid #000;
-      padding: 12px;
-      text-align: center;
-      background: #fff;
-      font-size: 1rem;
       font-weight: 700;
     }
-    .slot-row {
-      display: grid;
-      grid-template-columns: auto 1fr 1.5fr;
-      gap: 10px;
-      align-items: center;
-      width: 100%;
-      padding: 10px 0;
-      border-bottom: 1px solid #000;
-    }
-    .spell-table {
+    .modifier-value { min-width: 72px; }
+    .spell-grid {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      width: 100%;
+      gap: 8px;
+      min-height: 0;
+      overflow: auto;
     }
     .spell-row {
       display: grid;
-      grid-template-columns: auto 1fr 1.5fr;
+      grid-template-columns: 1.4fr 0.9fr 2fr;
       gap: 10px;
       align-items: center;
-      width: 100%;
-      padding: 10px 0;
       border-bottom: 1px solid #000;
+      padding-bottom: 8px;
     }
     .spell-level {
       display: flex;
@@ -630,51 +229,26 @@
       white-space: nowrap;
     }
     .spell-badge {
-      width: 28px;
-      height: 28px;
+      width: 34px;
+      height: 34px;
       border: 2px solid #000;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.95rem;
-    }
-    .spell-total {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .spell-total input {
-      width: 100%;
-      max-width: 100px;
-      margin-top: 4px;
-      text-align: center;
     }
     .spell-circles {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      justify-content: flex-start;
-    }
-    .slot-controls {
-      display: flex;
       gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: center;
-    }
-    .slot-circles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
       justify-content: flex-end;
     }
     .slot-circle {
-      width: 60px;
-      height: 60px;
+      width: 42px;
+      height: 42px;
       border: 2px solid #000;
-      border-radius: 100%;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -688,25 +262,101 @@
       background: #000;
       color: #fff;
     }
-    .footer-actions {
-      display: flex;
+    .counter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      flex-wrap: wrap;
     }
-    .help-text {
-      font-size: 0.85rem;
-      color: #000;
-      line-height: 1.3;
-    }
-    .textarea-wrap {
+    .counter-card {
+      border: 2px solid #000;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      background: #fff;
     }
-    textarea {
-      min-height: 150px;
-      resize: none;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    .counter-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .counter-input {
+      flex: 1;
+      border: 2px solid #000;
+      padding: 10px;
+      font-size: 1rem;
+      text-align: center;
+      background: #fff;
+      color: #000;
+    }
+    .death-save-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .save-group { display: flex; flex-direction: column; gap: 8px; }
+    .save-circles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .save-circle {
+      width: 44px;
+      height: 44px;
+      border: 2px solid #000;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      user-select: none;
+    }
+    .save-circle.success {
+      background: #000;
+      color: #fff;
+    }
+    .save-circle.failure {
+      background: #fff;
+      color: #000;
+    }
+    .conditions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .condition-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #000;
+    }
+    .condition-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #000;
+    }
+    .condition-row .condition-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .condition-row .exhaustion-input {
+      width: 54px;
+      border: 2px solid #000;
+      padding: 8px;
+      text-align: center;
+      background: #fff;
+      color: #000;
+    }
+    .help-text {
+      font-size: 0.85rem;
+      line-height: 1.3;
     }
     .status-bar {
       font-size: 0.85rem;
@@ -715,32 +365,15 @@
       line-height: 24px;
       color: #000;
     }
-    @media (max-width: 480px) {
-      .page-nav button {
-        flex: 1 1 100%;
-      }
-      .field-group {
-        grid-template-columns: 1fr;
-      }
-      .stat-row, .money-row, .hp-row, .slot-row {
-        grid-template-columns: 1fr;
-      }
-      .slot-controls {
-        justify-content: space-between;
-      }
-      .slot-circles {
-        justify-content: flex-start;
-      }
-      .control-group {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .hp-box {
-        min-width: 100%;
-      }
-      .pill {
-        width: 100%;
-      }
+    .muted { color: #000; }
+    .hidden { display: none !important; }
+    @media (max-width: 680px) {
+      .section-nav button { flex: 1 1 100%; }
+      .subpage-nav button { flex: 1 1 100%; }
+      .grid-2, .grid-3, .counter-grid, .death-save-grid, .conditions-grid { grid-template-columns: 1fr; }
+      .stat-row, .ability-row, .skill-row, .resource-row, .inventory-row { grid-template-columns: 1fr auto auto; }
+      .spell-row { grid-template-columns: 1fr; }
+      .spell-circles { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -748,49 +381,68 @@
   <div class="app-shell">
     <header>
       <div class="logo">InkSheet</div>
-      <div class="page-title" id="headerTitle">Charakter</div>
+      <div class="page-title" id="headerTitle">Combat</div>
     </header>
 
-    <nav class="page-nav" id="navButtons"></nav>
+    <nav class="section-nav" id="sectionNav"></nav>
+    <nav class="subpage-nav" id="subpageNav"></nav>
 
-    <main class="page-container" id="pages"></main>
+    <main class="content-shell" id="contentShell"></main>
 
-    <div class="status-bar" id="statusBar">Autospeichern aktiviert. Werte werden automatisch gespeichert.</div>
+    <div class="status-bar" id="statusBar">Autosave enabled. Load or edit values to save automatically.</div>
   </div>
 
   <script>
-    // Data model for the character tracker
     const STORAGE_KEY = 'inkSheetCharacter';
-    const pages = ['Charakter', 'Werte', 'Gesundheit', 'Geld', 'Zauberplätze', 'Kampfzähler', 'Einstellungen'];
+    const sectionConfig = [
+      {
+        name: 'Combat',
+        subpages: [
+          { key: 'health', label: 'Health' },
+          { key: 'spellSlots', label: 'Spell Slots' },
+          { key: 'counters', label: 'Counters' },
+          { key: 'deathSaves', label: 'Death Saves' },
+          { key: 'conditions', label: 'Conditions' },
+        ],
+      },
+      {
+        name: 'Character',
+        subpages: [
+          { key: 'characterInfo', label: 'Character' },
+          { key: 'abilities', label: 'Abilities' },
+          { key: 'skills', label: 'Skills' },
+        ],
+      },
+      {
+        name: 'Magic',
+        subpages: [
+          { key: 'spellcasting', label: 'Spellcasting' },
+          { key: 'resources', label: 'Resources' },
+        ],
+      },
+      {
+        name: 'Inventory',
+        subpages: [
+          { key: 'money', label: 'Money' },
+          { key: 'inventory', label: 'Inventory' },
+          { key: 'notes', label: 'Notes' },
+        ],
+      },
+      {
+        name: 'Settings',
+        subpages: [
+          { key: 'settings', label: 'Settings' },
+        ],
+      },
+    ];
     const currencyLabels = {
-      PP: 'Platinmünzen',
-      GP: 'Goldmünzen',
-      SP: 'Silbermünzen',
-      CP: 'Kupfermünzen',
+      PP: 'Platinum Coins',
+      GP: 'Gold Coins',
+      SP: 'Silver Coins',
+      CP: 'Copper Coins',
     };
     const moneyKeys = ['PP', 'GP', 'SP', 'CP'];
     const spellLevels = [1, 2, 3, 4, 5];
-    const abilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
-    const skillDefinitions = [
-      { name: 'Acrobatics', ability: 'DEX' },
-      { name: 'Animal Handling', ability: 'WIS' },
-      { name: 'Arcana', ability: 'INT' },
-      { name: 'Athletics', ability: 'STR' },
-      { name: 'Deception', ability: 'CHA' },
-      { name: 'History', ability: 'INT' },
-      { name: 'Insight', ability: 'WIS' },
-      { name: 'Intimidation', ability: 'CHA' },
-      { name: 'Investigation', ability: 'INT' },
-      { name: 'Medicine', ability: 'WIS' },
-      { name: 'Nature', ability: 'INT' },
-      { name: 'Perception', ability: 'WIS' },
-      { name: 'Performance', ability: 'CHA' },
-      { name: 'Persuasion', ability: 'CHA' },
-      { name: 'Religion', ability: 'INT' },
-      { name: 'Sleight of Hand', ability: 'DEX' },
-      { name: 'Stealth', ability: 'DEX' },
-      { name: 'Survival', ability: 'WIS' },
-    ];
     const halfCasterClasses = ['artificer', 'paladin', 'ranger'];
     const halfCasterProgression = {
       1: {},
@@ -814,12 +466,30 @@
       19: {1: 4, 2: 3, 3: 2, 4: 1},
       20: {1: 4, 2: 3, 3: 2, 4: 1, 5: 1},
     };
-
+    const abilityOrder = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+    const skillNames = {
+      STR: ['Athletics'],
+      DEX: ['Acrobatics', 'Sleight of Hand', 'Stealth'],
+      CON: [],
+      INT: ['Arcana', 'History', 'Investigation', 'Nature', 'Religion'],
+      WIS: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
+      CHA: ['Deception', 'Intimidation', 'Performance', 'Persuasion'],
+    };
+    const conditionLabels = [
+      'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible',
+      'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious'
+    ];
     const characterTemplate = {
       name: '',
       race: '',
       class: '',
       level: 1,
+      background: '',
+      armorClass: 10,
+      initiative: 0,
+      speed: 30,
+      passivePerception: 10,
+      proficiencyBonus: 2,
       stats: {
         STR: 10,
         DEX: 10,
@@ -828,13 +498,6 @@
         WIS: 10,
         CHA: 10,
       },
-      proficiencyBonus: 2,
-      savingThrows: Object.fromEntries(abilityNames.map(ability => [ability, false])),
-      skills: Object.fromEntries(skillDefinitions.map(skill => [skill.name, {
-        ability: skill.ability,
-        proficient: false,
-        expertise: false,
-      }])),
       health: {
         current: 10,
         max: 10,
@@ -854,22 +517,68 @@
       combatCounters: {
         damageTaken: 0,
         damageDealt: 0,
+        healingReceived: 0,
         healingGiven: 0,
-        temporaryHP: 0,
+        tempHp: 0,
+      },
+      conditions: {
+        blinded: false,
+        charmed: false,
+        deafened: false,
+        frightened: false,
+        grappled: false,
+        incapacitated: false,
+        invisible: false,
+        paralyzed: false,
+        petrified: false,
+        poisoned: false,
+        prone: false,
+        restrained: false,
+        stunned: false,
+        unconscious: false,
+        exhaustion: 0,
+      },
+      spellcasting: {
+        saveDc: 8,
+        attackBonus: 0,
+        ability: 'INT',
+      },
+      classResources: [
+        { name: 'Channel Divinity', value: 0 },
+        { name: 'Sorcery Points', value: 0 },
+        { name: 'Ki Points', value: 0 },
+        { name: 'Bardic Inspiration', value: 0 },
+        { name: 'Rage', value: 0 },
+        { name: 'Wild Shape', value: 0 },
+      ],
+      inventory: [
+        { name: 'Healing Potion', quantity: 3 },
+        { name: 'Torch', quantity: 5 },
+        { name: 'Holy Water', quantity: 2 },
+      ],
+      notes: '',
+      skills: {},
+      preferences: {
+        autoSave: true,
       },
     };
 
     let character = loadCharacter();
-    let currentPage = 0;
+    let currentSection = 0;
+    let currentSubpage = 0;
+    let selectedAbility = 'INT';
 
-    const navButtons = document.getElementById('navButtons');
-    const pagesContainer = document.getElementById('pages');
+    const sectionNav = document.getElementById('sectionNav');
+    const subpageNav = document.getElementById('subpageNav');
+    const contentShell = document.getElementById('contentShell');
     const headerTitle = document.getElementById('headerTitle');
     const statusBar = document.getElementById('statusBar');
 
     function saveCharacter() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(character));
-      statusBar.textContent = 'Gespeichert um ' + new Date().toLocaleTimeString();
+      if (character.preferences.autoSave !== false) {
+        statusBar.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+      }
     }
 
     function loadCharacter() {
@@ -900,6 +609,22 @@
       return merged;
     }
 
+    function ensureSkillData() {
+      if (!character.skills || typeof character.skills !== 'object') {
+        character.skills = {};
+      }
+      abilityOrder.forEach(ability => {
+        if (!character.skills[ability]) {
+          character.skills[ability] = {};
+        }
+        skillNames[ability].forEach(skill => {
+          if (!character.skills[ability][skill]) {
+            character.skills[ability][skill] = { modifier: 0, proficiency: 'NONE' };
+          }
+        });
+      });
+    }
+
     function createButton(text, handler, extraClass = '') {
       const button = document.createElement('button');
       button.type = 'button';
@@ -909,78 +634,7 @@
       return button;
     }
 
-    function createPageNavigation() {
-      pages.forEach((pageName, index) => {
-        if (pageName === 'Combat Counters' || pageName === 'Kampfzähler') return;
-        const button = createButton(pageName, () => switchPage(index));
-        if (index === currentPage) button.classList.add('active');
-        navButtons.appendChild(button);
-      });
-    }
-
-    function switchPage(index) {
-      currentPage = index;
-      headerTitle.textContent = pages[index];
-      Array.from(navButtons.children).forEach((btn, idx) => {
-        btn.classList.toggle('active', idx === index);
-      });
-      Array.from(pagesContainer.children).forEach((page, idx) => {
-        page.classList.toggle('active', idx === index);
-      });
-      statusBar.textContent = 'Ansicht: ' + pages[index] + '. Änderungen werden automatisch gespeichert.';
-    }
-
-    function buildApp() {
-      createPageNavigation();
-      pagesContainer.appendChild(buildCharacterPage());
-      pagesContainer.appendChild(buildStatsPage());
-      pagesContainer.appendChild(buildHealthPage());
-      pagesContainer.appendChild(buildMoneyPage());
-      pagesContainer.appendChild(buildSpellSlotsPage());
-      pagesContainer.appendChild(buildCombatCountersPage());
-      pagesContainer.appendChild(buildSettingsPage());
-      switchPage(currentPage);
-    }
-
-    function buildCharacterPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
-      page.innerHTML = '<div class="section"></div>';
-      const section = page.firstElementChild;
-      section.appendChild(createField('Name', 'name', 'text', character.name));
-      section.appendChild(createField('Rasse', 'race', 'text', character.race));
-      section.appendChild(createField('Klasse', 'class', 'text', character.class));
-      section.appendChild(createField('Stufe', 'level', 'number', character.level, { min: 1, max: 20 }));
-      section.appendChild(createPassiveScoresCard());
-      return page;
-    }
-
-    function createPassiveScoresCard() {
-      const card = document.createElement('div');
-      card.className = 'passive-card';
-      const title = document.createElement('div');
-      title.className = 'passive-card-title';
-      title.textContent = 'Passive Werte';
-      card.appendChild(title);
-      [
-        { label: 'Passive Wahrnehmung', skill: 'Perception' },
-        { label: 'Passives Ermitteln', skill: 'Investigation' },
-        { label: 'Passive Einsicht', skill: 'Insight' },
-      ].forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'passive-row';
-        const label = document.createElement('div');
-        label.textContent = item.label;
-        const value = document.createElement('div');
-        value.className = 'passive-value';
-        value.textContent = getPassiveScore(item.skill);
-        row.append(label, value);
-        card.appendChild(row);
-      });
-      return card;
-    }
-
-    function createField(labelText, key, type, value, attrs = {}) {
+    function createField(labelText, key, type, value, attrs = {}, onUpdate = null) {
       const wrapper = document.createElement('div');
       wrapper.className = 'field';
       const label = document.createElement('label');
@@ -995,300 +649,241 @@
         } else {
           character[key] = input.value;
         }
+        if (onUpdate) onUpdate();
         saveCharacter();
-        if ((key === 'class' || key === 'level') && currentPage === 4) {
-          refreshSpellSlotsPage();
-        }
       });
-      wrapper.appendChild(label);
-      wrapper.appendChild(input);
+      wrapper.append(label, input);
       return wrapper;
     }
 
-    function buildStatsPage() {
-      const page = document.createElement('section');
-      page.className = 'page stats-page';
+    function createNumberField(labelText, key, value, attrs = {}, onUpdate = null) {
+      return createField(labelText, key, 'number', value, attrs, onUpdate);
+    }
+
+    function createTextField(labelText, key, value, attrs = {}, onUpdate = null) {
+      return createField(labelText, key, 'text', value, attrs, onUpdate);
+    }
+
+    function renderApp() {
+      ensureSkillData();
+      renderSectionNav();
+      renderSubpageNav();
+      renderContent();
+    }
+
+    function renderSectionNav() {
+      sectionNav.innerHTML = '';
+      sectionConfig.forEach((section, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = section.name;
+        button.className = index === currentSection ? 'active' : '';
+        button.addEventListener('click', () => {
+          currentSection = index;
+          currentSubpage = 0;
+          selectedAbility = 'INT';
+          renderApp();
+        });
+        sectionNav.appendChild(button);
+      });
+    }
+
+    function renderSubpageNav() {
+      const section = sectionConfig[currentSection];
+      subpageNav.innerHTML = '';
+      section.subpages.forEach((subpage, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = subpage.label;
+        button.className = index === currentSubpage ? 'active' : '';
+        button.addEventListener('click', () => {
+          currentSubpage = index;
+          if (section.name === 'Character' && subpage.key === 'skills') {
+            selectedAbility = 'INT';
+          }
+          renderContent();
+          renderSubpageNav();
+        });
+        subpageNav.appendChild(button);
+      });
+    }
+
+    function renderContent() {
+      const section = sectionConfig[currentSection];
+      const subpage = section.subpages[currentSubpage];
+      headerTitle.textContent = `${section.name} · ${subpage.label}`;
+      contentShell.innerHTML = '';
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      const subpageKey = sectionConfig[currentSection].subpages[currentSubpage].key;
+      switch (currentSection) {
+        case 0:
+          panel.appendChild(buildCombatContent(subpageKey));
+          break;
+        case 1:
+          panel.appendChild(buildCharacterContent(subpageKey));
+          break;
+        case 2:
+          panel.appendChild(buildMagicContent(subpageKey));
+          break;
+        case 3:
+          panel.appendChild(buildInventoryContent(subpageKey));
+          break;
+        default:
+          panel.appendChild(buildSettingsContent());
+      }
+      contentShell.appendChild(panel);
+    }
+
+    function buildCombatContent(key) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'stack';
+      switch (key) {
+        case 'health':
+          wrapper.appendChild(buildHealthPage());
+          break;
+        case 'spellSlots':
+          wrapper.appendChild(buildSpellSlotsPage());
+          break;
+        case 'counters':
+          wrapper.appendChild(buildCombatCountersPage());
+          break;
+        case 'deathSaves':
+          wrapper.appendChild(buildDeathSavesPage());
+          break;
+        default:
+          wrapper.appendChild(buildConditionsPage());
+      }
+      return wrapper;
+    }
+
+    function buildHealthPage() {
       const section = document.createElement('div');
-      section.className = 'section stats-section';
-      page.appendChild(section);
-      populateStatsSection(section);
-      return page;
+      section.className = 'stack';
+      section.appendChild(createHealthCard('Current HP', 'current'));
+      section.appendChild(createHealthCard('Max HP', 'max'));
+      section.appendChild(createHealthCard('Temporary HP', 'temp'));
+      return section;
     }
 
-    function populateStatsSection(section) {
-      section.innerHTML = '';
-
-      const proficiencyCard = document.createElement('div');
-      proficiencyCard.className = 'stats-card';
-      const proficiencyTitle = document.createElement('div');
-      proficiencyTitle.className = 'stats-card-title';
-      proficiencyTitle.textContent = 'Proficiency Bonus';
-      const proficiencyRow = document.createElement('div');
-      proficiencyRow.className = 'stats-proficiency-row';
-      const proficiencyInput = document.createElement('input');
-      proficiencyInput.type = 'number';
-      proficiencyInput.className = 'stats-input';
-      proficiencyInput.min = '1';
-      proficiencyInput.max = '12';
-      proficiencyInput.value = character.proficiencyBonus;
-      proficiencyInput.dataset.role = 'proficiency-input';
-      proficiencyInput.addEventListener('input', () => {
-        character.proficiencyBonus = Math.max(1, Math.min(12, Number(proficiencyInput.value) || 1));
-        proficiencyInput.value = character.proficiencyBonus;
-        saveCharacter();
-        renderStats();
-      });
-      proficiencyRow.appendChild(proficiencyInput);
-      proficiencyCard.append(proficiencyTitle, proficiencyRow);
-      section.appendChild(proficiencyCard);
-
-      const abilitiesCard = document.createElement('div');
-      abilitiesCard.className = 'stats-card';
-      const abilitiesTitle = document.createElement('div');
-      abilitiesTitle.className = 'stats-card-title';
-      abilitiesTitle.textContent = 'Ability Scores';
-      const abilitiesList = document.createElement('div');
-      abilitiesList.className = 'stats-list';
-      abilityNames.forEach(ability => {
-        abilitiesList.appendChild(createAbilityRow(ability));
-      });
-      abilitiesCard.append(abilitiesTitle, abilitiesList);
-      section.appendChild(abilitiesCard);
-
-      const skillsSubpage = document.createElement('div');
-      skillsSubpage.className = 'skill-subpage';
-      skillsSubpage.dataset.role = 'skill-subpage';
-      const subpageHeader = document.createElement('div');
-      subpageHeader.className = 'skill-subpage-header';
-      const subpageTitle = document.createElement('div');
-      subpageTitle.dataset.role = 'skill-subpage-title';
-      subpageTitle.textContent = 'Fertigkeiten';
-      const closeButton = document.createElement('button');
-      closeButton.type = 'button';
-      closeButton.className = 'ability-skill-btn';
-      closeButton.textContent = '← Zurück zu Werte';
-      closeButton.addEventListener('click', () => {
-        section.querySelector('[data-role="skill-subpage"]').classList.remove('active');
-        section.dataset.activeAbility = '';
-      });
-      subpageHeader.append(subpageTitle, closeButton);
-      const subpageList = document.createElement('div');
-      subpageList.className = 'skill-subpage-list';
-      subpageList.dataset.role = 'skill-subpage-list';
-      skillsSubpage.append(subpageHeader, subpageList);
-      section.appendChild(skillsSubpage);
-    }
-
-    function createAbilityRow(ability) {
-      const row = document.createElement('div');
-      row.className = 'ability-row';
-      row.dataset.ability = ability;
-
-      const label = document.createElement('div');
-      label.className = 'ability-name';
-      label.textContent = ability;
-
-      const scoreInput = document.createElement('input');
-      scoreInput.type = 'number';
-      scoreInput.className = 'stats-input';
-      scoreInput.min = '1';
-      scoreInput.max = '30';
-      scoreInput.value = character.stats[ability];
-      scoreInput.addEventListener('input', () => {
-        character.stats[ability] = Math.max(1, Math.min(30, Number(scoreInput.value) || 1));
-        scoreInput.value = character.stats[ability];
-        saveCharacter();
-        renderStats();
-      });
-
-      const modifier = document.createElement('div');
-      modifier.className = 'stats-badge';
-      modifier.dataset.role = 'modifier';
-
-      const saveWrap = document.createElement('label');
-      saveWrap.className = 'checkbox-wrap';
-      const saveCheckbox = document.createElement('input');
-      saveCheckbox.type = 'checkbox';
-      saveCheckbox.dataset.role = 'save-checkbox';
-      saveCheckbox.checked = character.savingThrows[ability];
-      saveCheckbox.addEventListener('change', () => {
-        character.savingThrows[ability] = saveCheckbox.checked;
-        saveCharacter();
-        renderStats();
-      });
-      const saveLabel = document.createElement('span');
-      saveLabel.textContent = 'Rettungswurf';
-      saveWrap.append(saveCheckbox, saveLabel);
-
-      const skillsButton = document.createElement('button');
-      skillsButton.type = 'button';
-      skillsButton.className = 'ability-skill-btn';
-      skillsButton.textContent = 'Fertigkeiten';
-      skillsButton.addEventListener('click', () => openAbilitySkills(ability));
-
-      row.append(label, scoreInput, modifier, saveWrap, skillsButton);
-      return row;
-    }
-
-    function openAbilitySkills(ability) {
-      const section = pagesContainer.querySelector('.stats-section');
-      if (!section) return;
-      const subpage = section.querySelector('[data-role="skill-subpage"]');
-      const title = section.querySelector('[data-role="skill-subpage-title"]');
-      const list = section.querySelector('[data-role="skill-subpage-list"]');
-      if (!subpage || !title || !list) return;
-      section.dataset.activeAbility = ability;
-      title.textContent = `${ability}-Fertigkeiten`;
-      const matchingSkills = skillDefinitions.filter(skill => skill.ability === ability);
-      list.innerHTML = '';
-      matchingSkills.forEach(skill => {
-        list.appendChild(createSkillRow(skill));
-      });
-      subpage.classList.add('active');
-      renderStats();
-    }
-
-    function getSkillStateText(skillData) {
-      if (skillData.expertise) return 'EXPERTISE';
-      if (skillData.proficient) return 'PROFICIENT';
-      return 'NONE';
-    }
-
-    function cycleSkillState(skillData) {
-      if (skillData.expertise) {
-        skillData.expertise = false;
-        skillData.proficient = false;
-      } else if (skillData.proficient) {
-        skillData.expertise = true;
-        skillData.proficient = true;
-      } else {
-        skillData.proficient = true;
-        skillData.expertise = false;
-      }
-    }
-
-    function createSkillRow(skill) {
-      const row = document.createElement('div');
-      row.className = 'skill-row';
-      row.dataset.skill = skill.name;
-
-      const content = document.createElement('div');
-      content.className = 'skill-card-content';
+    function createHealthCard(labelText, key) {
+      const card = document.createElement('div');
+      card.className = 'card';
       const title = document.createElement('div');
-      title.className = 'skill-title';
-      const skillName = document.createElement('div');
-      skillName.className = 'skill-name';
-      skillName.textContent = skill.name;
-      const skillAbility = document.createElement('div');
-      skillAbility.className = 'skill-ability';
-      skillAbility.textContent = `(${skill.ability})`;
-      title.append(skillName, skillAbility);
-      content.appendChild(title);
-
-      const bonus = document.createElement('div');
-      bonus.className = 'skill-bonus';
-      bonus.dataset.role = 'skill-bonus';
-
-      const stateButton = document.createElement('button');
-      stateButton.type = 'button';
-      stateButton.className = 'skill-state-button';
-      stateButton.dataset.role = 'skill-state';
-      stateButton.textContent = getSkillStateText(character.skills[skill.name]);
-      stateButton.addEventListener('click', () => {
-        const skillData = character.skills[skill.name];
-        cycleSkillState(skillData);
-        stateButton.textContent = getSkillStateText(skillData);
-        saveCharacter();
-        renderStats();
-      });
-
-      row.append(content, bonus, stateButton);
-      return row;
-    }
-
-    function getSkillBonus(skillName) {
-      const skillData = character.skills[skillName];
-      const abilityMod = calcModifier(character.stats[skillData.ability]);
-      let bonus = abilityMod;
-      if (skillData.proficient) {
-        bonus += character.proficiencyBonus;
+      title.className = 'card-title';
+      title.textContent = labelText;
+      let valueElement;
+      if (key === 'max') {
+        valueElement = document.createElement('input');
+        valueElement.type = 'number';
+        valueElement.className = 'card-input';
+        valueElement.value = character.health[key];
+        valueElement.addEventListener('input', () => {
+          character.health[key] = Math.max(0, Number(valueElement.value) || 0);
+          if (character.health.current > character.health.max) {
+            character.health.current = character.health.max;
+          }
+          renderContent();
+          saveCharacter();
+        });
+      } else {
+        valueElement = document.createElement('div');
+        valueElement.className = 'card-value';
+        valueElement.textContent = character.health[key];
       }
-      if (skillData.expertise) {
-        bonus += character.proficiencyBonus;
-      }
-      return bonus;
-    }
-
-    function getSavingThrowBonus(ability) {
-      const abilityMod = calcModifier(character.stats[ability]);
-      return character.savingThrows[ability] ? abilityMod + character.proficiencyBonus : abilityMod;
-    }
-
-    function getPassiveScore(skillName) {
-      return 10 + getSkillBonus(skillName);
-    }
-
-    function renderStats() {
-      const section = pagesContainer.querySelector('.stats-section');
-      if (!section) return;
-
-      const proficiencyInput = section.querySelector('[data-role="proficiency-input"]');
-      if (proficiencyInput) {
-        proficiencyInput.value = character.proficiencyBonus;
-      }
-
-      section.querySelectorAll('.ability-row').forEach(row => {
-        const ability = row.dataset.ability;
-        const scoreInput = row.querySelector('input[type="number"]');
-        if (scoreInput) {
-          scoreInput.value = character.stats[ability];
-        }
-        const modifier = row.querySelector('[data-role="modifier"]');
-        if (modifier) {
-          modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
-        }
-        const saveCheckbox = row.querySelector('[data-role="save-checkbox"]');
-        if (saveCheckbox) {
-          saveCheckbox.checked = character.savingThrows[ability];
-        }
-      });
-
-      const subpage = section.querySelector('[data-role="skill-subpage"]');
-      const activeAbility = section.dataset.activeAbility;
-      if (subpage && activeAbility && subpage.classList.contains('active')) {
-        const list = section.querySelector('[data-role="skill-subpage-list"]');
-        if (list) {
-          list.querySelectorAll('.skill-row').forEach(row => {
-            const skillName = row.dataset.skill;
-            const skillData = character.skills[skillName];
-            const bonus = row.querySelector('[data-role="skill-bonus"]');
-            if (bonus) {
-              bonus.textContent = formatModifier(getSkillBonus(skillName));
+      card.append(title, valueElement);
+      if (key !== 'max') {
+        const buttonRow = document.createElement('div');
+        buttonRow.className = 'button-row';
+        ['-10', '-5', '+5', '+10'].forEach(label => {
+          const button = document.createElement('div');
+          button.className = 'pill';
+          button.textContent = label;
+          const delta = Number(label);
+          button.addEventListener('click', () => {
+            const max = key === 'current' ? character.health.max : 999;
+            character.health[key] = Math.max(0, Math.min(max, character.health[key] + delta));
+            if (key === 'max' && character.health.current > character.health.max) {
+              character.health.current = character.health.max;
             }
-            const stateButton = row.querySelector('[data-role="skill-state"]');
-            if (stateButton) {
-              stateButton.textContent = getSkillStateText(skillData);
-            }
+            renderContent();
+            saveCharacter();
           });
-        }
+          buttonRow.appendChild(button);
+        });
+        card.appendChild(buttonRow);
       }
+      return card;
     }
 
-    function calcModifier(value) {
-      return Math.floor((value - 10) / 2);
+    function buildSpellSlotsPage() {
+      const section = document.createElement('div');
+      section.className = 'card';
+      const subtitle = document.createElement('div');
+      subtitle.className = 'help-text';
+      const info = getSpellcastingInfo();
+      subtitle.textContent = `Spellcasting: ${info.type} (${info.subclass})`;
+      const grid = document.createElement('div');
+      grid.className = 'spell-grid';
+      const visibleLevels = getVisibleSpellLevels();
+      if (visibleLevels.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'help-text';
+        empty.textContent = 'No spell slots are available at this character level.';
+        grid.appendChild(empty);
+      } else {
+        visibleLevels.forEach(level => grid.appendChild(createSpellSlotRow(level)));
+      }
+      const actionRow = document.createElement('div');
+      actionRow.className = 'button-row';
+      actionRow.appendChild(createButton('Restore All', restoreAllSlots));
+      actionRow.appendChild(createButton('Clear All', clearAllSlots));
+      section.append(subtitle, grid, actionRow);
+      return section;
     }
 
-    function formatModifier(value) {
-      return (value >= 0 ? '+' : '') + value;
+    function createSpellSlotRow(level) {
+      const row = document.createElement('div');
+      row.className = 'spell-row';
+      const label = document.createElement('div');
+      label.className = 'spell-level';
+      const badge = document.createElement('div');
+      badge.className = 'spell-badge';
+      badge.textContent = level;
+      const labelText = document.createElement('div');
+      labelText.textContent = `Level ${level}`;
+      label.append(badge, labelText);
+      const totalBox = document.createElement('div');
+      totalBox.className = 'field';
+      const maxInput = document.createElement('input');
+      maxInput.type = 'number';
+      maxInput.min = 0;
+      maxInput.value = getSpellLevelSlots(level);
+      maxInput.addEventListener('input', () => {
+        const slot = getOrCreateSpellSlot(level);
+        slot.max = Math.max(0, Number(maxInput.value) || 0);
+        if (slot.used > slot.max) slot.used = slot.max;
+        renderContent();
+        saveCharacter();
+      });
+      totalBox.append(maxInput);
+      const circles = document.createElement('div');
+      circles.className = 'spell-circles';
+      const slot = getOrCreateSpellSlot(level);
+      slot.max = Number(maxInput.value);
+      createSlotCircles(slot, circles);
+      row.append(label, totalBox, circles);
+      row.dataset.level = level;
+      return row;
     }
 
     function getSpellcastingInfo() {
       const className = String(character.class || '').trim();
       const normalized = className.toLowerCase();
       if (halfCasterClasses.includes(normalized)) {
-        return { type: 'Half Caster', typeLabel: 'Halbzauberer', subclass: className || 'Halbzauberer' };
+        return { type: 'Half Caster', subclass: className || 'Half Caster' };
       }
-      return { type: 'Spellcasting', typeLabel: 'Zaubern', subclass: className || 'Vorbereitet' };
+      return { type: 'Spellcasting', subclass: className || 'Prepared' };
     }
 
     function getSpellLevelSlots(level) {
@@ -1311,318 +906,6 @@
       return spellLevels;
     }
 
-    function buildHealthPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
-      const section = document.createElement('div');
-      section.className = 'section';
-
-      section.appendChild(createHealthCard('Current HP', 'current'));
-      section.appendChild(createHealthCard('Max HP', 'max'));
-      section.appendChild(createHealthCard('Temp HP', 'temp'));
-
-      const combatButton = createButton('Kampfzähler', () => switchPage(pages.indexOf('Kampfzähler')));
-      section.appendChild(combatButton);
-
-      page.appendChild(section);
-      return page;
-    }
-
-    function createHealthCard(labelText, key) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = labelText;
-      let valueElement;
-      if (key === 'max') {
-        valueElement = document.createElement('input');
-        valueElement.type = 'number';
-        valueElement.className = 'card-input';
-        valueElement.id = `healthInput-${key}`;
-        valueElement.value = character.health[key];
-        valueElement.addEventListener('input', () => {
-          character.health[key] = Math.max(0, Number(valueElement.value) || 0);
-          if (character.health.current > character.health.max) {
-            character.health.current = character.health.max;
-            const currentInput = document.getElementById('healthValue-current');
-            if (currentInput) currentInput.textContent = character.health.current;
-          }
-          saveCharacter();
-          renderHealth();
-        });
-      } else {
-        valueElement = document.createElement('div');
-        valueElement.className = 'card-value';
-        valueElement.id = `healthValue-${key}`;
-        valueElement.textContent = character.health[key];
-      }
-      card.append(title, valueElement);
-      if (key !== 'max') {
-        const buttonRow = document.createElement('div');
-        buttonRow.className = 'button-row';
-        ['-10', '-5', '-1', '+1', '+5', '+10'].forEach(label => {
-          const button = document.createElement('div');
-          button.className = 'pill';
-          button.textContent = label;
-          const delta = Number(label);
-          button.addEventListener('click', () => adjustHealth(key, delta));
-          buttonRow.appendChild(button);
-        });
-        card.appendChild(buttonRow);
-      }
-      return card;
-    }
-
-    function adjustHealth(key, delta) {
-      const max = key === 'current' ? character.health.max : 999;
-      character.health[key] = Math.max(0, Math.min(max, character.health[key] + delta));
-      if (key === 'max' && character.health.current > character.health.max) {
-        character.health.current = character.health.max;
-      }
-      renderHealth();
-      saveCharacter();
-    }
-
-    function renderHealth() {
-      ['current', 'temp'].forEach(key => {
-        const value = document.getElementById(`healthValue-${key}`);
-        if (value) value.textContent = character.health[key];
-      });
-      const maxInput = document.getElementById('healthInput-max');
-      if (maxInput) maxInput.value = character.health.max;
-    }
-
-    function buildMoneyPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
-      const section = document.createElement('div');
-      section.className = 'section';
-      moneyKeys.forEach(currency => {
-        section.appendChild(createMoneyRow(currency));
-      });
-      page.appendChild(section);
-      return page;
-    }
-
-    function createMoneyRow(currency) {
-      const row = document.createElement('div');
-      row.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = currencyLabels[currency] || currency;
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.className = 'card-input';
-      input.id = `moneyInput-${currency}`;
-      input.value = character.money[currency];
-      input.addEventListener('input', () => {
-        character.money[currency] = Math.max(0, Number(input.value) || 0);
-        saveCharacter();
-      });
-      row.append(title, input);
-      row.dataset.currency = currency;
-      return row;
-    }
-
-    function adjustMoney(currency, delta) {
-      character.money[currency] = Math.max(0, character.money[currency] + delta);
-      renderMoney();
-      saveCharacter();
-    }
-
-    function renderMoney() {
-      moneyKeys.forEach(currency => {
-        const input = document.getElementById(`moneyInput-${currency}`);
-        if (input) input.value = character.money[currency];
-      });
-    }
-
-    function buildSpellSlotsPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
-      const section = document.createElement('div');
-      section.className = 'section';
-      const info = getSpellcastingInfo();
-
-      const header = document.createElement('div');
-      header.className = 'spell-header';
-      const title = document.createElement('div');
-      title.className = 'spell-title';
-      title.textContent = 'Zauberplätze';
-      const subtitle = document.createElement('div');
-      subtitle.className = 'spell-subtitle';
-      subtitle.textContent = `Zaubern: ${info.type} (${info.subclass})`;
-      header.append(title, subtitle);
-
-      const table = document.createElement('div');
-      table.className = 'spell-table';
-      table.appendChild(createSpellRowHeader());
-
-      const visibleLevels = getVisibleSpellLevels();
-      if (visibleLevels.length === 0) {
-        const noSlots = document.createElement('div');
-        noSlots.className = 'spell-no-slots';
-        noSlots.textContent = 'Auf dieser Stufe sind keine Zauberplätze verfügbar.';
-        table.appendChild(noSlots);
-      } else {
-        visibleLevels.forEach(level => {
-          const row = createSpellSlotRow(level);
-          table.appendChild(row);
-        });
-      }
-
-      const actionRow = document.createElement('div');
-      actionRow.className = 'spell-actions';
-      const restoreButton = createButton('Alle Plätze wiederherstellen', restoreAllSlots);
-      const clearButton = createButton('Alle löschen', clearAllSlots);
-      actionRow.append(restoreButton, clearButton);
-
-      section.append(header, table, actionRow);
-      page.appendChild(section);
-      return page;
-    }
-
-    function buildCombatCountersPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
-      const section = document.createElement('div');
-      section.className = 'section';
-
-      const title = document.createElement('div');
-      title.className = 'stats-card-title';
-      title.textContent = 'Kampfzähler';
-
-      const inputWrapper = document.createElement('div');
-      inputWrapper.className = 'field';
-      const inputLabel = document.createElement('label');
-      inputLabel.textContent = 'Betrag';
-      const inputField = document.createElement('input');
-      inputField.type = 'number';
-      inputField.className = 'stats-input';
-      inputField.dataset.role = 'combat-counter-input';
-      inputField.placeholder = '0';
-      inputField.addEventListener('input', () => {
-        if (inputField.value === '') return;
-        inputField.value = String(Math.max(0, Number(inputField.value) || 0));
-      });
-      inputWrapper.append(inputLabel, inputField);
-
-      const buttons = document.createElement('div');
-      buttons.className = 'combat-counters-buttons';
-      const buttonDefinitions = [
-        { label: 'Schaden erhalten', key: 'damageTaken' },
-        { label: 'Schaden verursacht', key: 'damageDealt' },
-        { label: 'Heilung gegeben', key: 'healingGiven' },
-        { label: 'Temporäre TP', key: 'temporaryHP' },
-      ];
-
-      buttonDefinitions.forEach(def => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'large-button';
-        button.textContent = def.label;
-        button.addEventListener('click', () => {
-          const amount = Number(inputField.value) || 0;
-          if (amount <= 0) return;
-          character.combatCounters[def.key] += amount;
-          inputField.value = '';
-          saveCharacter();
-          renderCombatCounters();
-        });
-        buttons.append(button);
-      });
-
-      const totals = document.createElement('div');
-      totals.className = 'combat-counters-totals';
-      totals.dataset.role = 'combat-counters-totals';
-
-      section.append(title, inputWrapper, buttons, totals);
-      page.appendChild(section);
-      renderCombatCounters();
-      return page;
-    }
-
-    function renderCombatCounters() {
-      const totalsContainer = document.querySelector('[data-role="combat-counters-totals"]');
-      if (!totalsContainer) return;
-      totalsContainer.innerHTML = '';
-      const counters = [
-        { label: 'Schaden erhalten', key: 'damageTaken' },
-        { label: 'Schaden verursacht', key: 'damageDealt' },
-        { label: 'Heilung gegeben', key: 'healingGiven' },
-        { label: 'Temporäre TP', key: 'temporaryHP' },
-      ];
-      counters.forEach(counter => {
-        const row = document.createElement('div');
-        row.className = 'counter-total-row';
-        const label = document.createElement('div');
-        label.textContent = `${counter.label}: ${character.combatCounters[counter.key] || 0}`;
-        const resetButton = document.createElement('button');
-        resetButton.type = 'button';
-        resetButton.className = 'counter-reset-button';
-        resetButton.textContent = 'Zurücksetzen';
-        resetButton.addEventListener('click', () => {
-          character.combatCounters[counter.key] = 0;
-          saveCharacter();
-          renderCombatCounters();
-        });
-        row.append(label, resetButton);
-        totalsContainer.appendChild(row);
-      });
-    }
-
-    function createSpellRowHeader() {
-      const header = document.createElement('div');
-      header.className = 'spell-row header-row';
-      const levelHeader = document.createElement('div');
-      levelHeader.textContent = 'Spell Level';
-      const maxHeader = document.createElement('div');
-      maxHeader.textContent = 'Maximum Slots';
-      const remainingHeader = document.createElement('div');
-      remainingHeader.textContent = 'Remaining Slots';
-      header.append(levelHeader, maxHeader, remainingHeader);
-      return header;
-    }
-
-    function createSpellSlotRow(level) {
-      const row = document.createElement('div');
-      row.className = 'spell-row';
-      const label = document.createElement('div');
-      label.className = 'spell-level';
-      const badge = document.createElement('div');
-      badge.className = 'spell-badge';
-      badge.textContent = level;
-      const labelText = document.createElement('div');
-      labelText.textContent = `Level ${level}`;
-      label.append(badge, labelText);
-
-      const totalBox = document.createElement('div');
-      totalBox.className = 'spell-total';
-      const maxInput = document.createElement('input');
-      maxInput.type = 'number';
-      maxInput.min = 0;
-      maxInput.value = getSpellLevelSlots(level);
-      maxInput.addEventListener('input', () => {
-        const slot = getOrCreateSpellSlot(level);
-        slot.max = Math.max(0, Number(maxInput.value) || 0);
-        if (slot.used > slot.max) slot.used = slot.max;
-        renderSpellSlots();
-        saveCharacter();
-      });
-      totalBox.append(maxInput);
-
-      const circles = document.createElement('div');
-      circles.className = 'spell-circles';
-      const slot = getOrCreateSpellSlot(level);
-      slot.max = Number(maxInput.value);
-      createSlotCircles(slot, circles);
-
-      row.append(label, totalBox, circles);
-      row.dataset.level = level;
-      return row;
-    }
-
     function getOrCreateSpellSlot(level) {
       let slot = character.spellSlots.find(s => s.level === level);
       if (!slot) {
@@ -1641,135 +924,573 @@
         circle.addEventListener('click', () => {
           slot.used = i + 1 === slot.used ? i : i + 1;
           if (slot.used > slot.max) slot.used = slot.max;
-          renderSpellSlots();
+          renderContent();
           saveCharacter();
         });
         container.appendChild(circle);
       }
     }
 
-    function renderSpellSlots() {
-      const rows = pagesContainer.querySelectorAll('.spell-row');
-      rows.forEach(row => {
-        const level = Number(row.dataset.level);
-        const slot = character.spellSlots.find(s => s.level === level);
-        if (!slot) return;
-        const circles = row.querySelector('.spell-circles');
-        if (circles) createSlotCircles(slot, circles);
-        const input = row.querySelector('input[type="number"]');
-        if (input) input.value = slot.max;
-      });
+    function restoreAllSlots() {
+      character.spellSlots.forEach(slot => { slot.used = 0; });
+      renderContent();
+      saveCharacter();
     }
 
-    function buildSettingsPage() {
-      const page = document.createElement('section');
-      page.className = 'page';
+    function clearAllSlots() {
+      character.spellSlots.forEach(slot => {
+        slot.max = 0;
+        slot.used = 0;
+      });
+      renderContent();
+      saveCharacter();
+    }
+
+    function buildCombatCountersPage() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'counter-grid';
+      const counters = [
+        { key: 'damageTaken', label: 'Damage Taken' },
+        { key: 'damageDealt', label: 'Damage Dealt' },
+        { key: 'healingReceived', label: 'Healing Received' },
+        { key: 'healingGiven', label: 'Healing Given' },
+        { key: 'tempHp', label: 'Temporary HP' },
+      ];
+      counters.forEach(counter => {
+        const card = document.createElement('div');
+        card.className = 'counter-card';
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = counter.label;
+        const row = document.createElement('div');
+        row.className = 'counter-row';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'counter-input';
+        input.value = character.combatCounters[counter.key];
+        input.addEventListener('input', () => {
+          character.combatCounters[counter.key] = Number(input.value) || 0;
+          saveCharacter();
+        });
+        const plus = document.createElement('div');
+        plus.className = 'pill';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => {
+          character.combatCounters[counter.key] = (Number(character.combatCounters[counter.key]) || 0) + 1;
+          input.value = character.combatCounters[counter.key];
+          saveCharacter();
+        });
+        row.append(input, plus);
+        card.append(title, row);
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function buildDeathSavesPage() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'death-save-grid';
+      const buildGroup = (label, type) => {
+        const group = document.createElement('div');
+        group.className = 'save-group card';
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = label;
+        const circles = document.createElement('div');
+        circles.className = 'save-circles';
+        const values = type === 'success' ? [0, 1, 2] : [0, 1, 2];
+        const stateKey = type === 'success' ? 'successes' : 'failures';
+        values.forEach(index => {
+          const circle = document.createElement('div');
+          circle.className = 'save-circle';
+          circle.textContent = index + 1;
+          circle.addEventListener('click', () => {
+            const current = character.deathSaves?.[stateKey] || 0;
+            character.deathSaves = character.deathSaves || {};
+            character.deathSaves[stateKey] = index === current ? 0 : index + 1;
+            renderContent();
+            saveCharacter();
+          });
+          circles.appendChild(circle);
+        });
+        const reset = document.createElement('button');
+        reset.type = 'button';
+        reset.className = 'large-button';
+        reset.textContent = 'Reset';
+        reset.addEventListener('click', () => {
+          character.deathSaves = { successes: 0, failures: 0 };
+          renderContent();
+          saveCharacter();
+        });
+        group.append(title, circles, reset);
+        return group;
+      };
+      wrapper.append(buildGroup('Successes', 'success'), buildGroup('Failures', 'failure'));
+      return wrapper;
+    }
+
+    function buildConditionsPage() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = 'Conditions';
+      const list = document.createElement('div');
+      list.className = 'conditions-grid';
+      conditionLabels.forEach(label => {
+        const row = document.createElement('div');
+        row.className = 'condition-row';
+        const conditionKey = label.toLowerCase();
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = Boolean(character.conditions?.[conditionKey]);
+        input.addEventListener('change', () => {
+          if (conditionKey === 'exhaustion') {
+            character.conditions.exhaustion = Number(input.value) || 0;
+          } else {
+            character.conditions[conditionKey] = input.checked;
+          }
+          saveCharacter();
+        });
+        const labelEl = document.createElement('div');
+        labelEl.className = 'condition-label';
+        labelEl.textContent = label;
+        row.append(input, labelEl);
+        if (label === 'Exhaustion') {
+          const exhaustionInput = document.createElement('input');
+          exhaustionInput.type = 'number';
+          exhaustionInput.min = 0;
+          exhaustionInput.max = 6;
+          exhaustionInput.className = 'exhaustion-input';
+          exhaustionInput.value = character.conditions.exhaustion || 0;
+          exhaustionInput.addEventListener('input', () => {
+            character.conditions.exhaustion = Math.max(0, Math.min(6, Number(exhaustionInput.value) || 0));
+            saveCharacter();
+          });
+          row.appendChild(exhaustionInput);
+        }
+        list.appendChild(row);
+      });
+      wrapper.append(title, list);
+      return wrapper;
+    }
+
+    function buildCharacterContent(key) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'stack';
+      switch (key) {
+        case 'characterInfo':
+          wrapper.appendChild(buildCharacterInfoPage());
+          break;
+        case 'abilities':
+          wrapper.appendChild(buildAbilityScoresPage());
+          break;
+        default:
+          wrapper.appendChild(buildSkillsPage());
+      }
+      return wrapper;
+    }
+
+    function buildCharacterInfoPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const grid = document.createElement('div');
+      grid.className = 'grid-2';
+      const fields = [
+        ['Name', 'name', 'text', character.name],
+        ['Class', 'class', 'text', character.class],
+        ['Level', 'level', 'number', character.level, { min: 1, max: 20 }],
+        ['Race', 'race', 'text', character.race],
+        ['Background', 'background', 'text', character.background],
+        ['Armor Class', 'armorClass', 'number', character.armorClass, { min: 0 }],
+        ['Initiative', 'initiative', 'number', character.initiative, { min: -20, max: 20 }],
+        ['Speed', 'speed', 'number', character.speed, { min: 0 }],
+        ['Passive Perception', 'passivePerception', 'number', character.passivePerception, { min: 0 }],
+        ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, { min: 0 }],
+      ];
+      fields.forEach(([label, key, type, value, attrs]) => {
+        const field = createField(label, key, type, value, attrs || {}, () => {
+          if (['class', 'level'].includes(key)) {
+            renderContent();
+          }
+        });
+        grid.appendChild(field);
+      });
+      card.appendChild(grid);
+      return card;
+    }
+
+    function buildAbilityScoresPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = 'Ability Scores';
+      const list = document.createElement('div');
+      list.className = 'stack';
+      abilityOrder.forEach(ability => {
+        const row = document.createElement('div');
+        row.className = 'ability-row';
+        const name = document.createElement('div');
+        name.className = 'ability-name';
+        name.textContent = ability;
+        const score = document.createElement('div');
+        score.className = 'stat-value';
+        score.textContent = character.stats[ability];
+        const modifier = document.createElement('div');
+        modifier.className = 'modifier-value';
+        modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'inline-pill';
+        button.textContent = 'Skills >';
+        button.addEventListener('click', () => {
+          selectedAbility = ability;
+          currentSection = 1;
+          currentSubpage = 2;
+          renderApp();
+        });
+        row.append(name, score, modifier, button);
+        list.appendChild(row);
+      });
+      card.append(title, list);
+      return card;
+    }
+
+    function buildSkillsPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = `${selectedAbility} Skills`;
+      const list = document.createElement('div');
+      list.className = 'stack';
+      const skills = skillNames[selectedAbility] || [];
+      if (skills.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'help-text';
+        empty.textContent = 'No skills are listed for this ability.';
+        list.appendChild(empty);
+      } else {
+        skills.forEach(skill => {
+          const row = document.createElement('div');
+          row.className = 'skill-row';
+          const skillName = document.createElement('div');
+          skillName.className = 'skill-name';
+          skillName.textContent = skill;
+          const modifierValue = document.createElement('input');
+          modifierValue.type = 'number';
+          modifierValue.className = 'stat-value';
+          modifierValue.value = character.skills[selectedAbility][skill].modifier;
+          modifierValue.addEventListener('input', () => {
+            character.skills[selectedAbility][skill].modifier = Number(modifierValue.value) || 0;
+            saveCharacter();
+          });
+          const proficiency = document.createElement('button');
+          proficiency.type = 'button';
+          proficiency.className = 'small-pill';
+          proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
+          proficiency.addEventListener('click', () => {
+            const states = ['NONE', 'PROF', 'EXP'];
+            const current = states.indexOf(character.skills[selectedAbility][skill].proficiency);
+            character.skills[selectedAbility][skill].proficiency = states[(current + 1) % states.length];
+            proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
+            saveCharacter();
+          });
+          row.append(skillName, modifierValue, proficiency);
+          list.appendChild(row);
+        });
+      }
+      card.append(title, list);
+      return card;
+    }
+
+    function buildMagicContent(key) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'stack';
+      switch (key) {
+        case 'spellcasting':
+          wrapper.appendChild(buildSpellcastingPage());
+          break;
+        default:
+          wrapper.appendChild(buildResourcesPage());
+      }
+      return wrapper;
+    }
+
+    function buildSpellcastingPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const grid = document.createElement('div');
+      grid.className = 'grid-2';
+      grid.append(
+        createNumberField('Spell Save DC', 'spellSaveDc', character.spellcasting.saveDc, { min: 0 }, () => {}),
+        createNumberField('Spell Attack Bonus', 'spellAttackBonus', character.spellcasting.attackBonus, { min: -20, max: 20 }, () => {})
+      );
+      const abilityField = document.createElement('div');
+      abilityField.className = 'field';
+      const label = document.createElement('label');
+      label.textContent = 'Spellcasting Ability';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = character.spellcasting.ability;
+      input.addEventListener('input', () => {
+        character.spellcasting.ability = input.value.toUpperCase();
+        saveCharacter();
+      });
+      abilityField.append(label, input);
+      grid.appendChild(abilityField);
+      card.appendChild(grid);
+      return card;
+    }
+
+    function buildResourcesPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = 'Class Resources';
+      const list = document.createElement('div');
+      list.className = 'stack';
+      character.classResources.forEach((resource, index) => {
+        const row = document.createElement('div');
+        row.className = 'resource-row';
+        const name = document.createElement('input');
+        name.type = 'text';
+        name.value = resource.name;
+        name.className = 'resource-name';
+        name.addEventListener('input', () => {
+          character.classResources[index].name = name.value;
+          saveCharacter();
+        });
+        const value = document.createElement('input');
+        value.type = 'number';
+        value.className = 'resource-value';
+        value.value = resource.value;
+        value.addEventListener('input', () => {
+          character.classResources[index].value = Number(value.value) || 0;
+          saveCharacter();
+        });
+        const minus = document.createElement('div');
+        minus.className = 'pill';
+        minus.textContent = '-';
+        minus.addEventListener('click', () => {
+          character.classResources[index].value = Math.max(0, Number(character.classResources[index].value) - 1);
+          value.value = character.classResources[index].value;
+          saveCharacter();
+        });
+        const plus = document.createElement('div');
+        plus.className = 'pill';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => {
+          character.classResources[index].value = Number(character.classResources[index].value) + 1;
+          value.value = character.classResources[index].value;
+          saveCharacter();
+        });
+        row.append(name, value, minus, plus);
+        list.appendChild(row);
+      });
+      const addButton = createButton('Add Resource', () => {
+        character.classResources.push({ name: 'New Resource', value: 0 });
+        renderContent();
+        saveCharacter();
+      });
+      card.append(title, list, addButton);
+      return card;
+    }
+
+    function buildInventoryContent(key) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'stack';
+      switch (key) {
+        case 'money':
+          wrapper.appendChild(buildMoneyPage());
+          break;
+        case 'inventory':
+          wrapper.appendChild(buildInventoryPage());
+          break;
+        default:
+          wrapper.appendChild(buildNotesPage());
+      }
+      return wrapper;
+    }
+
+    function buildMoneyPage() {
       const section = document.createElement('div');
-      section.className = 'section';
-      const exportButton = createButton('Charakter exportieren', handleExport);
-      const copyButton = createButton('Code kopieren', handleCopyCode);
-      const importButton = createButton('Charakter importieren', handleImport);
-      const clearButton = createButton('Speicher löschen', handleClearSave, 'destructive');
-      const textareaWrap = document.createElement('div');
-      textareaWrap.className = 'textarea-wrap';
-      const textareaLabel = document.createElement('div');
-      textareaLabel.className = 'help-text';
-      textareaLabel.textContent = 'Füge hier einen Share-Code ein, um ihn zu importieren, oder exportiere einen unten.';
-      const textarea = document.createElement('textarea');
-      textarea.id = 'shareCodeArea';
-      textarea.placeholder = 'INK1:...';
-      textareaWrap.append(textareaLabel, textarea);
-      section.append(exportButton, copyButton, importButton, clearButton, textareaWrap);
-      page.appendChild(section);
-      return page;
-    }
-
-    function createCharacterCode(data) {
-      const json = JSON.stringify(data);
-      const encoded = encodeTextToBase64(json);
-      return `INK1:${encoded}`;
-    }
-
-    function encodeTextToBase64(text) {
-      const utf8Bytes = new TextEncoder().encode(text);
-      let binary = '';
-      utf8Bytes.forEach(byte => {
-        binary += String.fromCharCode(byte);
+      section.className = 'card';
+      moneyKeys.forEach(currency => {
+        const row = document.createElement('div');
+        row.className = 'resource-row';
+        const title = document.createElement('div');
+        title.className = 'label-text';
+        title.textContent = currencyLabels[currency] || currency;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'resource-value';
+        input.value = character.money[currency];
+        input.addEventListener('input', () => {
+          character.money[currency] = Math.max(0, Number(input.value) || 0);
+          saveCharacter();
+        });
+        const minus = document.createElement('div');
+        minus.className = 'pill';
+        minus.textContent = '-';
+        minus.addEventListener('click', () => {
+          character.money[currency] = Math.max(0, Number(character.money[currency]) - 1);
+          input.value = character.money[currency];
+          saveCharacter();
+        });
+        const plus = document.createElement('div');
+        plus.className = 'pill';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => {
+          character.money[currency] = Number(character.money[currency]) + 1;
+          input.value = character.money[currency];
+          saveCharacter();
+        });
+        row.append(title, input, minus, plus);
+        section.appendChild(row);
       });
-      return btoa(binary);
+      return section;
     }
 
-    function decodeCharacterCode(code) {
-      if (typeof code !== 'string' || !code.startsWith('INK1:')) {
-        throw new Error('Invalid share code prefix.');
-      }
-      const payload = code.slice('INK1:'.length).trim();
-      if (!payload) {
-        throw new Error('Share code is empty.');
-      }
-      const binary = atob(payload);
-      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
+    function buildInventoryPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const list = document.createElement('div');
+      list.className = 'stack';
+      character.inventory.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'inventory-row';
+        const name = document.createElement('input');
+        name.type = 'text';
+        name.value = item.name;
+        name.className = 'item-name';
+        name.addEventListener('input', () => {
+          character.inventory[index].name = name.value;
+          saveCharacter();
+        });
+        const quantity = document.createElement('input');
+        quantity.type = 'number';
+        quantity.min = 0;
+        quantity.className = 'quantity-value';
+        quantity.value = item.quantity;
+        quantity.addEventListener('input', () => {
+          character.inventory[index].quantity = Math.max(0, Number(quantity.value) || 0);
+          saveCharacter();
+        });
+        const minus = document.createElement('div');
+        minus.className = 'pill';
+        minus.textContent = '-';
+        minus.addEventListener('click', () => {
+          character.inventory[index].quantity = Math.max(0, Number(character.inventory[index].quantity) - 1);
+          quantity.value = character.inventory[index].quantity;
+          saveCharacter();
+        });
+        const plus = document.createElement('div');
+        plus.className = 'pill';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => {
+          character.inventory[index].quantity = Number(character.inventory[index].quantity) + 1;
+          quantity.value = character.inventory[index].quantity;
+          saveCharacter();
+        });
+        row.append(name, quantity, minus, plus);
+        list.appendChild(row);
+      });
+      const addButton = createButton('Add Item', () => {
+        character.inventory.push({ name: 'New Item', quantity: 1 });
+        renderContent();
+        saveCharacter();
+      });
+      card.append(list, addButton);
+      return card;
     }
 
-    function validateCharacterCode(code) {
-      if (typeof code !== 'string') return false;
-      try {
-        const decoded = decodeCharacterCode(code);
-        const parsed = JSON.parse(decoded);
-        return parsed && typeof parsed === 'object' && !Array.isArray(parsed);
-      } catch (error) {
-        return false;
-      }
+    function buildNotesPage() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const label = document.createElement('div');
+      label.className = 'label-text';
+      label.textContent = 'Notes';
+      const textarea = document.createElement('textarea');
+      textarea.value = character.notes || '';
+      textarea.addEventListener('input', () => {
+        character.notes = textarea.value;
+        saveCharacter();
+      });
+      card.append(label, textarea);
+      return card;
+    }
+
+    function buildSettingsContent() {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const buttons = [
+        ['Export Character', handleExport],
+        ['Import Character', handleImport],
+        ['Reset Character', handleReset],
+      ];
+      buttons.forEach(([label, handler]) => card.appendChild(createButton(label, handler)));
+      const preferenceCard = document.createElement('div');
+      preferenceCard.className = 'card';
+      const prefLabel = document.createElement('div');
+      prefLabel.className = 'label-text';
+      prefLabel.textContent = 'Preferences';
+      const prefRow = document.createElement('div');
+      prefRow.className = 'condition-row';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = character.preferences.autoSave !== false;
+      checkbox.addEventListener('change', () => {
+        character.preferences.autoSave = checkbox.checked;
+        saveCharacter();
+      });
+      const prefText = document.createElement('div');
+      prefText.className = 'condition-label';
+      prefText.textContent = 'Auto-save';
+      prefRow.append(checkbox, prefText);
+      preferenceCard.append(prefLabel, prefRow);
+      const textareaWrap = document.createElement('div');
+      textareaWrap.className = 'card';
+      const help = document.createElement('div');
+      help.className = 'help-text';
+      help.textContent = 'Paste JSON here for import, or copy exported JSON.';
+      const textarea = document.createElement('textarea');
+      textarea.id = 'jsonArea';
+      textarea.placeholder = '{ "name": "..." }';
+      textareaWrap.append(help, textarea);
+      card.append(preferenceCard, textareaWrap);
+      return card;
     }
 
     function handleExport() {
-      const shareCodeArea = document.getElementById('shareCodeArea');
-      const exportText = createCharacterCode(character);
-      shareCodeArea.value = exportText;
-      statusBar.textContent = 'Charakter-Share-Code wurde erstellt.';
-    }
-
-    function handleCopyCode() {
-      const shareCodeArea = document.getElementById('shareCodeArea');
-      const code = (shareCodeArea.value || '').trim();
-      if (!code) {
-        statusBar.textContent = 'Exportiere zuerst einen Charakter, um einen Share-Code zu erstellen.';
-        return;
-      }
-      copyText(code);
-      statusBar.textContent = 'Share-Code in die Zwischenablage kopiert.';
+      const jsonArea = document.getElementById('jsonArea');
+      const exportText = JSON.stringify(character, null, 2);
+      jsonArea.value = exportText;
+      copyText(exportText);
+      statusBar.textContent = 'Character JSON copied to clipboard and shown below.';
     }
 
     function handleImport() {
-      const shareCodeArea = document.getElementById('shareCodeArea');
-      const code = (shareCodeArea.value || '').trim();
-      if (!code) {
-        statusBar.textContent = 'Gib einen Share-Code zum Importieren ein.';
-        return;
-      }
-      if (!validateCharacterCode(code)) {
-        statusBar.textContent = 'Ungültiger Share-Code. Bitte überprüfe den Code und versuche es erneut.';
-        return;
-      }
+      const jsonArea = document.getElementById('jsonArea');
       try {
-        const decoded = decodeCharacterCode(code);
-        const parsed = JSON.parse(decoded);
+        const parsed = JSON.parse(jsonArea.value);
         character = mergeCharacter(characterTemplate, parsed);
-        renderAll();
+        renderApp();
         saveCharacter();
-        statusBar.textContent = 'Charakter erfolgreich importiert.';
+        statusBar.textContent = 'Character imported successfully.';
       } catch (error) {
-        statusBar.textContent = 'Charakter konnte nicht importiert werden. Der Share-Code ist möglicherweise ungültig.';
+        statusBar.textContent = 'Invalid JSON import. Check your data.';
       }
     }
 
-    function handleClearSave() {
+    function handleReset() {
       localStorage.removeItem(STORAGE_KEY);
       character = JSON.parse(JSON.stringify(characterTemplate));
-      renderAll();
+      renderApp();
       saveCharacter();
-      statusBar.textContent = 'Speicher gelöscht. Vorlage wiederhergestellt.';
+      statusBar.textContent = 'Save cleared. Template restored.';
     }
 
     function copyText(text) {
@@ -1780,73 +1501,15 @@
       }
     }
 
-    function restoreAllSlots() {
-      character.spellSlots.forEach(slot => {
-        slot.used = 0;
-      });
-      renderSpellSlots();
-      saveCharacter();
+    function calcModifier(value) {
+      return Math.floor((value - 10) / 2);
     }
 
-    function clearAllSlots() {
-      character.spellSlots.forEach(slot => {
-        slot.max = 0;
-        slot.used = 0;
-      });
-      renderSpellSlots();
-      saveCharacter();
+    function formatModifier(value) {
+      return (value >= 0 ? '+' : '') + value;
     }
 
-    function refreshSpellSlotsPage() {
-      const page = pagesContainer.children[4];
-      if (!page) return;
-      const section = page.querySelector('.section');
-      if (!section) return;
-      section.innerHTML = '';
-      const info = getSpellcastingInfo();
-      const header = document.createElement('div');
-      header.className = 'spell-header';
-      const title = document.createElement('div');
-      title.className = 'spell-title';
-      title.textContent = 'Zauberplätze';
-      const subtitle = document.createElement('div');
-      subtitle.className = 'spell-subtitle';
-      subtitle.textContent = `Zaubern: ${info.type} (${info.subclass})`;
-      header.append(title, subtitle);
-      const table = document.createElement('div');
-      table.className = 'spell-table';
-      table.appendChild(createSpellRowHeader());
-      const visibleLevels = getVisibleSpellLevels();
-      if (visibleLevels.length === 0) {
-        const noSlots = document.createElement('div');
-        noSlots.className = 'spell-no-slots';
-        noSlots.textContent = 'Auf dieser Stufe sind keine Zauberplätze verfügbar.';
-        table.appendChild(noSlots);
-      } else {
-        visibleLevels.forEach(level => table.appendChild(createSpellSlotRow(level)));
-      }
-      const actionRow = document.createElement('div');
-      actionRow.className = 'spell-actions';
-      const restoreButton = createButton('Alle Plätze wiederherstellen', restoreAllSlots);
-      const clearButton = createButton('Alle löschen', clearAllSlots);
-      actionRow.append(restoreButton, clearButton);
-      section.append(header, table, actionRow);
-      renderSpellSlots();
-    }
-
-    function renderAll() {
-      pagesContainer.innerHTML = '';
-      buildApp();
-      renderStats();
-      renderHealth();
-      renderMoney();
-      renderSpellSlots();
-      renderCombatCounters();
-      const jsonArea = document.getElementById('jsonArea');
-      if (jsonArea) jsonArea.value = '';
-    }
-
-    buildApp();
+    renderApp();
     saveCharacter();
   </script>
 </body>
