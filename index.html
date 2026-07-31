@@ -521,7 +521,7 @@ var currencyLabels = {
   CP: 'Copper Coins'
 };
 var moneyKeys = ['PP', 'GP', 'SP', 'CP'];
-var spellLevels = [1, 2, 3, 4, 5];
+var spellLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 var halfCasterClasses = ['artificer', 'paladin', 'ranger'];
 var halfCasterProgression = {
   1: {},
@@ -619,6 +619,17 @@ var halfCasterProgression = {
     5: 1
   }
 };
+var fullCasterProgression = {
+  1: { 1: 2 }, 2: { 1: 3 }, 3: { 1: 4, 2: 2 }, 4: { 1: 4, 2: 3 },
+  5: { 1: 4, 2: 3, 3: 2 }, 6: { 1: 4, 2: 3, 3: 3 },
+  7: { 1: 4, 2: 3, 3: 3, 4: 1 }, 8: { 1: 4, 2: 3, 3: 3, 4: 2 },
+  9: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 }, 10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 }, 12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 }, 14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 }, 16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 }, 18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
+  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 }, 20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }
+};
 var abilityOrder = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 var skillNames = {
   STR: ['Athletics'],
@@ -697,7 +708,8 @@ var characterTemplate = {
   spellcasting: {
     saveDc: 8,
     attackBonus: 0,
-    ability: 'INT'
+    ability: 'INT',
+    casterType: 'NONE'
   },
   classResources: [{
     name: 'Resource',
@@ -1041,77 +1053,55 @@ function createSpellSlotRow(level) {
   badge.className = 'spell-badge';
   badge.textContent = level;
   var labelText = document.createElement('div');
-  labelText.textContent = "Level ".concat(level);
+  labelText.textContent = 'Level ' + level;
   label.append(badge, labelText);
   var totalBox = document.createElement('div');
   totalBox.className = 'field';
-  var maxInput = document.createElement('input');
-  maxInput.type = 'number';
-  maxInput.min = 0;
-  maxInput.value = getSpellLevelSlots(level);
-  maxInput.addEventListener('input', function () {
-    var slot = getOrCreateSpellSlot(level);
-    slot.max = Math.max(0, Number(maxInput.value) || 0);
-    if (slot.used > slot.max) slot.used = slot.max;
-    renderContent();
-    saveCharacter();
-  });
-  totalBox.append(maxInput);
+  var maxValue = document.createElement('div');
+  maxValue.className = 'stat-value';
+  maxValue.textContent = getSpellLevelSlots(level);
+  totalBox.appendChild(maxValue);
   var circles = document.createElement('div');
   circles.className = 'spell-circles';
   var slot = getOrCreateSpellSlot(level);
-  slot.max = Number(maxInput.value);
+  slot.max = getSpellLevelSlots(level);
+  if (slot.used > slot.max) slot.used = slot.max;
   createSlotCircles(slot, circles);
   row.append(label, totalBox, circles);
   row.dataset.level = level;
   return row;
 }
 function getSpellcastingInfo() {
+  var casterType = character.spellcasting.casterType || 'NONE';
   var className = String(character.class || '').trim();
-  var normalized = className.toLowerCase();
-  if (halfCasterClasses.indexOf(normalized) !== -1) {
-    return {
-      type: 'Half Caster',
-      subclass: className || 'Half Caster'
-    };
-  }
-  return {
-    type: 'Spellcasting',
-    subclass: className || 'Prepared'
-  };
+  if (casterType === 'HALF') return { type: 'Half Caster', subclass: className || 'Half Caster' };
+  if (casterType === 'FULL') return { type: 'Full Caster', subclass: className || 'Full Caster' };
+  return { type: 'None', subclass: className || 'Not a caster' };
+}
+function getAutomaticSpellSlots() {
+  var level = Math.min(20, Math.max(1, Number(character.level) || 1));
+  var type = character.spellcasting.casterType || 'NONE';
+  if (type === 'HALF') return halfCasterProgression[level];
+  if (type === 'FULL') return fullCasterProgression[level];
+  return {};
 }
 function getSpellLevelSlots(level) {
-  var info = getSpellcastingInfo();
-  if (info.type === 'Half Caster') {
-    var charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
-    return halfCasterProgression[charLevel][level] || 0;
-  }
-  var stored = character.spellSlots.find(function (s) {
-    return s.level === level;
-  });
-  return stored ? stored.max : 0;
+  return getAutomaticSpellSlots()[level] || 0;
 }
 function getVisibleSpellLevels() {
-  var info = getSpellcastingInfo();
-  if (info.type === 'Half Caster') {
-    var charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
-    var available = halfCasterProgression[charLevel];
-    return spellLevels.filter(function (level) {
-      return available[level] > 0;
-    });
+  var available = getAutomaticSpellSlots();
+  return spellLevels.filter(function (level) { return available[level] > 0; });
+}
+function findSpellSlot(level) {
+  for (var i = 0; i < character.spellSlots.length; i += 1) {
+    if (character.spellSlots[i].level === level) return character.spellSlots[i];
   }
-  return spellLevels;
+  return null;
 }
 function getOrCreateSpellSlot(level) {
-  var slot = character.spellSlots.find(function (s) {
-    return s.level === level;
-  });
+  var slot = findSpellSlot(level);
   if (!slot) {
-    slot = {
-      level: level,
-      max: 0,
-      used: 0
-    };
+    slot = { level: level, max: 0, used: 0 };
     character.spellSlots.push(slot);
   }
   return slot;
@@ -1309,35 +1299,37 @@ function buildCharacterInfoPage() {
   card.className = 'card';
   var grid = document.createElement('div');
   grid.className = 'grid-2';
-  var fields = [['Name', 'name', 'text', character.name], ['Class', 'class', 'text', character.class], ['Level', 'level', 'number', character.level, {
-    min: 1,
-    max: 20
-  }], ['Race', 'race', 'text', character.race], ['Background', 'background', 'text', character.background], ['Armor Class', 'armorClass', 'number', character.armorClass, {
-    min: 0
-  }], ['Initiative', 'initiative', 'number', character.initiative, {
-    min: -20,
-    max: 20
-  }], ['Speed', 'speed', 'number', character.speed, {
-    min: 0
-  }], ['Passive Perception', 'passivePerception', 'number', character.passivePerception, {
-    min: 0
-  }], ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, {
-    min: 0
-  }]];
-  fields.forEach(function (_ref) {
-    var _ref2 = _slicedToArray(_ref, 5),
-      label = _ref2[0],
-      key = _ref2[1],
-      type = _ref2[2],
-      value = _ref2[3],
-      attrs = _ref2[4];
-    var field = createField(label, key, type, value, attrs || {}, function () {
-      if (['class', 'level'].indexOf(key) !== -1) {
+  var fields = [['Name', 'name', 'text', character.name], ['Class', 'class', 'text', character.class], ['Level', 'level', 'number', character.level, { min: 1, max: 20 }], ['Race', 'race', 'text', character.race], ['Background', 'background', 'text', character.background], ['Armor Class', 'armorClass', 'number', character.armorClass, { min: 0 }], ['Initiative', 'initiative', 'number', character.initiative, { min: -20, max: 20 }], ['Speed', 'speed', 'number', character.speed, { min: 0 }], ['Passive Perception', 'passivePerception', 'number', character.passivePerception, { min: 0 }], ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, { min: 0 }]];
+  fields.forEach(function (fieldData) {
+    var key = fieldData[1];
+    var field = createField(fieldData[0], key, fieldData[2], fieldData[3], fieldData[4] || {}, function () {
+      if (key === 'level') {
         renderContent();
       }
     });
     grid.appendChild(field);
   });
+  var casterField = document.createElement('div');
+  casterField.className = 'field';
+  var casterLabel = document.createElement('label');
+  casterLabel.textContent = 'Caster Type';
+  var casterSelect = document.createElement('select');
+  casterSelect.className = 'card-input';
+  [['NONE', 'None'], ['HALF', 'Half Caster'], ['FULL', 'Full Caster']].forEach(function (optionData) {
+    var option = document.createElement('option');
+    option.value = optionData[0];
+    option.textContent = optionData[1];
+    casterSelect.appendChild(option);
+  });
+  casterSelect.value = character.spellcasting.casterType || 'NONE';
+  casterSelect.addEventListener('change', function () {
+    character.spellcasting.casterType = casterSelect.value;
+    character.spellSlots.forEach(function (slot) { slot.used = 0; });
+    renderContent();
+    saveCharacter();
+  });
+  casterField.append(casterLabel, casterSelect);
+  grid.appendChild(casterField);
   card.appendChild(grid);
   return card;
 }
