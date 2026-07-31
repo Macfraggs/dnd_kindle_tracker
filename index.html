@@ -1359,7 +1359,7 @@ function buildAbilityScoresPage() {
     score.type = 'number';
     score.className = 'stat-value';
     score.value = character.stats[ability];
-    score.addEventListener('input', function () {
+    score.addEventListener('change', function () {
       character.stats[ability] = Number(score.value) || 0;
       renderContent();
       saveCharacter();
@@ -1479,7 +1479,7 @@ function buildSpellcastingPage() {
   var input = document.createElement('input');
   input.type = 'text';
   input.value = ability;
-  input.addEventListener('input', function () {
+  input.addEventListener('change', function () {
     character.spellcasting.ability = input.value.toUpperCase();
     renderContent();
     saveCharacter();
