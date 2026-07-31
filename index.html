@@ -105,6 +105,40 @@
     .stack { display: flex; flex-direction: column; gap: 8px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .character-card { gap: 10px; padding: 12px; }
+    .character-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-bottom: 2px solid #000;
+      padding-bottom: 6px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+    }
+    .character-heading span { font-size: 0.78rem; font-weight: 700; letter-spacing: 0; }
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 14px;
+      row-gap: 8px;
+    }
+    .character-grid .field { gap: 2px; min-width: 0; }
+    .character-grid label {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .character-grid input[type="text"], .character-grid input[type="number"], .character-grid select {
+      min-height: 34px;
+      border: 0;
+      border-bottom: 2px solid #000;
+      padding: 4px 2px;
+      font-size: 0.95rem;
+      background: #fff;
+      color: #000;
+      border-radius: 0;
+    }
+    .compact-select { width: 100%; }
     .field {
       display: flex;
       flex-direction: column;
@@ -394,7 +428,11 @@
     .hidden { display: none !important; }
     @media (max-width: 680px) {
       .grid-2, .grid-3, .counter-grid, .death-save-grid, .conditions-grid { grid-template-columns: 1fr; }
-      .stat-row, .ability-row, .skill-row { grid-template-columns: 1fr auto auto; }
+      .character-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; row-gap: 6px; }
+      .stat-row, .skill-row { grid-template-columns: 1fr auto auto; }
+      .ability-row { grid-template-columns: minmax(42px, 0.7fr) 58px 58px auto; gap: 6px; }
+      .ability-row .inline-pill { min-width: 0; min-height: 38px; padding: 0 6px; font-size: 0.85rem; white-space: nowrap; }
+      .ability-row .stat-value, .ability-row .modifier-value { min-width: 0; padding: 8px 4px; }
       .resource-row, .inventory-row { grid-template-columns: minmax(0, 1fr) auto auto auto auto; }
       .money-row { grid-template-columns: minmax(90px, 1fr) auto auto; }
       .spell-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -1300,10 +1338,16 @@ function buildCharacterContent(key) {
 }
 function buildCharacterInfoPage() {
   var card = document.createElement('div');
-  card.className = 'card';
+  card.className = 'card character-card';
+  var heading = document.createElement('div');
+  heading.className = 'character-heading';
+  heading.appendChild(document.createTextNode('CHARACTER'));
+  var headingNote = document.createElement('span');
+  headingNote.textContent = 'Core details';
+  heading.appendChild(headingNote);
   var grid = document.createElement('div');
-  grid.className = 'grid-2';
-  var fields = [['Name', 'name', 'text', character.name], ['Class', 'class', 'text', character.class], ['Level', 'level', 'number', character.level, { min: 1, max: 20 }], ['Race', 'race', 'text', character.race], ['Background', 'background', 'text', character.background], ['Armor Class', 'armorClass', 'number', character.armorClass, { min: 0 }], ['Initiative', 'initiative', 'number', character.initiative, { min: -20, max: 20 }], ['Speed', 'speed', 'number', character.speed, { min: 0 }], ['Passive Perception', 'passivePerception', 'number', character.passivePerception, { min: 0 }], ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, { min: 0 }]];
+  grid.className = 'character-grid';
+  var fields = [['Name', 'name', 'text', character.name], ['Class', 'class', 'text', character.class], ['Race', 'race', 'text', character.race], ['Background', 'background', 'text', character.background], ['Level', 'level', 'number', character.level, { min: 1, max: 20 }], ['Armor Class', 'armorClass', 'number', character.armorClass, { min: 0 }], ['Initiative', 'initiative', 'number', character.initiative, { min: -20, max: 20 }], ['Speed', 'speed', 'number', character.speed, { min: 0 }], ['Passive Perception', 'passivePerception', 'number', character.passivePerception, { min: 0 }], ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, { min: 0 }]];
   fields.forEach(function (fieldData) {
     var key = fieldData[1];
     var field = createField(fieldData[0], key, fieldData[2], fieldData[3], fieldData[4] || {}, function () {
@@ -1318,7 +1362,7 @@ function buildCharacterInfoPage() {
   var casterLabel = document.createElement('label');
   casterLabel.textContent = 'Caster Type';
   var casterSelect = document.createElement('select');
-  casterSelect.className = 'card-input';
+  casterSelect.className = 'compact-select';
   [['NONE', 'None'], ['HALF', 'Half Caster'], ['FULL', 'Full Caster']].forEach(function (optionData) {
     var option = document.createElement('option');
     option.value = optionData[0];
@@ -1334,7 +1378,7 @@ function buildCharacterInfoPage() {
   });
   casterField.append(casterLabel, casterSelect);
   grid.appendChild(casterField);
-  card.appendChild(grid);
+  card.append(heading, grid);
   return card;
 }
 function buildAbilityScoresPage() {
