@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>InkSheet</title>
   <style>
     :root {
@@ -17,22 +17,23 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
-      overflow: hidden;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
       background: #fff;
       color: #000;
     }
     body {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      min-height: 100%;
     }
     .app-shell {
       display: flex;
       flex-direction: column;
-      height: 100%;
-      width: 100vw;
-      max-width: 100vw;
+      min-height: 100%;
+      width: 100%;
+      max-width: none;
       margin: 0;
       padding: 10px;
       gap: 8px;
@@ -94,7 +95,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      overflow: hidden;
+      overflow: visible;
     }
     .stack { display: flex; flex-direction: column; gap: 8px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -393,1153 +394,1319 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'inkSheetCharacter';
-    const sectionConfig = [
-      {
-        name: 'Combat',
-        subpages: [
-          { key: 'health', label: 'Health' },
-          { key: 'spellSlots', label: 'Spell Slots' },
-          { key: 'counters', label: 'Counters' },
-          { key: 'deathSaves', label: 'Death Saves' },
-          { key: 'conditions', label: 'Conditions' },
-        ],
-      },
-      {
-        name: 'Character',
-        subpages: [
-          { key: 'characterInfo', label: 'Character' },
-          { key: 'abilities', label: 'Abilities' },
-          { key: 'skills', label: 'Skills' },
-        ],
-      },
-      {
-        name: 'Magic',
-        subpages: [
-          { key: 'spellcasting', label: 'Spellcasting' },
-          { key: 'resources', label: 'Resources' },
-        ],
-      },
-      {
-        name: 'Inventory',
-        subpages: [
-          { key: 'money', label: 'Money' },
-          { key: 'inventory', label: 'Inventory' },
-          { key: 'notes', label: 'Notes' },
-        ],
-      },
-      {
-        name: 'Settings',
-        subpages: [
-          { key: 'settings', label: 'Settings' },
-        ],
-      },
-    ];
-    const currencyLabels = {
-      PP: 'Platinum Coins',
-      GP: 'Gold Coins',
-      SP: 'Silver Coins',
-      CP: 'Copper Coins',
-    };
-    const moneyKeys = ['PP', 'GP', 'SP', 'CP'];
-    const spellLevels = [1, 2, 3, 4, 5];
-    const halfCasterClasses = ['artificer', 'paladin', 'ranger'];
-    const halfCasterProgression = {
-      1: {},
-      2: {1: 2},
-      3: {1: 3, 2: 2},
-      4: {1: 3, 2: 2},
-      5: {1: 4, 2: 2},
-      6: {1: 4, 2: 2},
-      7: {1: 4, 2: 3},
-      8: {1: 4, 2: 3},
-      9: {1: 4, 2: 3, 3: 2},
-      10: {1: 4, 2: 3, 3: 2},
-      11: {1: 4, 2: 3, 3: 2},
-      12: {1: 4, 2: 3, 3: 2},
-      13: {1: 4, 2: 3, 3: 2},
-      14: {1: 4, 2: 3, 3: 2},
-      15: {1: 4, 2: 3, 3: 2},
-      16: {1: 4, 2: 3, 3: 2, 4: 1},
-      17: {1: 4, 2: 3, 3: 2, 4: 1},
-      18: {1: 4, 2: 3, 3: 2, 4: 1},
-      19: {1: 4, 2: 3, 3: 2, 4: 1},
-      20: {1: 4, 2: 3, 3: 2, 4: 1, 5: 1},
-    };
-    const abilityOrder = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
-    const skillNames = {
-      STR: ['Athletics'],
-      DEX: ['Acrobatics', 'Sleight of Hand', 'Stealth'],
-      CON: [],
-      INT: ['Arcana', 'History', 'Investigation', 'Nature', 'Religion'],
-      WIS: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
-      CHA: ['Deception', 'Intimidation', 'Performance', 'Persuasion'],
-    };
-    const conditionLabels = [
-      'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible',
-      'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious'
-    ];
-    const characterTemplate = {
-      name: '',
-      race: '',
-      class: '',
-      level: 1,
-      background: '',
-      armorClass: 10,
-      initiative: 0,
-      speed: 30,
-      passivePerception: 10,
-      proficiencyBonus: 2,
-      stats: {
-        STR: 10,
-        DEX: 10,
-        CON: 10,
-        INT: 10,
-        WIS: 10,
-        CHA: 10,
-      },
-      health: {
-        current: 10,
-        max: 10,
-        temp: 0,
-      },
-      money: {
-        PP: 0,
-        GP: 0,
-        SP: 0,
-        CP: 0,
-      },
-      spellSlots: Array.from({ length: 9 }, (_, index) => ({
-        level: index + 1,
+    (function () {
+      if (!Array.isArray) {
+        Array.isArray = function (value) { return Object.prototype.toString.call(value) === '[object Array]'; };
+      }
+      if (!Array.prototype.indexOf) {
+        Array.prototype.indexOf = function (value) {
+          for (var i = 0; i < this.length; i += 1) { if (this[i] === value) { return i; } }
+          return -1;
+        };
+      }
+      if (window.Node && !Node.prototype.append) {
+        Node.prototype.append = function () {
+          var fragment = document.createDocumentFragment();
+          for (var i = 0; i < arguments.length; i += 1) {
+            var item = arguments[i];
+            fragment.appendChild(item && item.nodeType ? item : document.createTextNode(String(item)));
+          }
+          this.appendChild(fragment);
+        };
+      }
+    }());
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+var STORAGE_KEY = 'inkSheetCharacter';
+var sectionConfig = [{
+  name: 'Combat',
+  subpages: [{
+    key: 'health',
+    label: 'Health'
+  }, {
+    key: 'spellSlots',
+    label: 'Spell Slots'
+  }, {
+    key: 'counters',
+    label: 'Counters'
+  }, {
+    key: 'deathSaves',
+    label: 'Death Saves'
+  }, {
+    key: 'conditions',
+    label: 'Conditions'
+  }]
+}, {
+  name: 'Character',
+  subpages: [{
+    key: 'characterInfo',
+    label: 'Character'
+  }, {
+    key: 'abilities',
+    label: 'Abilities'
+  }, {
+    key: 'skills',
+    label: 'Skills'
+  }]
+}, {
+  name: 'Magic',
+  subpages: [{
+    key: 'spellcasting',
+    label: 'Spellcasting'
+  }, {
+    key: 'resources',
+    label: 'Resources'
+  }]
+}, {
+  name: 'Inventory',
+  subpages: [{
+    key: 'money',
+    label: 'Money'
+  }, {
+    key: 'inventory',
+    label: 'Inventory'
+  }, {
+    key: 'notes',
+    label: 'Notes'
+  }]
+}, {
+  name: 'Settings',
+  subpages: [{
+    key: 'settings',
+    label: 'Settings'
+  }]
+}];
+var currencyLabels = {
+  PP: 'Platinum Coins',
+  GP: 'Gold Coins',
+  SP: 'Silver Coins',
+  CP: 'Copper Coins'
+};
+var moneyKeys = ['PP', 'GP', 'SP', 'CP'];
+var spellLevels = [1, 2, 3, 4, 5];
+var halfCasterClasses = ['artificer', 'paladin', 'ranger'];
+var halfCasterProgression = {
+  1: {},
+  2: {
+    1: 2
+  },
+  3: {
+    1: 3,
+    2: 2
+  },
+  4: {
+    1: 3,
+    2: 2
+  },
+  5: {
+    1: 4,
+    2: 2
+  },
+  6: {
+    1: 4,
+    2: 2
+  },
+  7: {
+    1: 4,
+    2: 3
+  },
+  8: {
+    1: 4,
+    2: 3
+  },
+  9: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  10: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  11: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  12: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  13: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  14: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  15: {
+    1: 4,
+    2: 3,
+    3: 2
+  },
+  16: {
+    1: 4,
+    2: 3,
+    3: 2,
+    4: 1
+  },
+  17: {
+    1: 4,
+    2: 3,
+    3: 2,
+    4: 1
+  },
+  18: {
+    1: 4,
+    2: 3,
+    3: 2,
+    4: 1
+  },
+  19: {
+    1: 4,
+    2: 3,
+    3: 2,
+    4: 1
+  },
+  20: {
+    1: 4,
+    2: 3,
+    3: 2,
+    4: 1,
+    5: 1
+  }
+};
+var abilityOrder = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+var skillNames = {
+  STR: ['Athletics'],
+  DEX: ['Acrobatics', 'Sleight of Hand', 'Stealth'],
+  CON: [],
+  INT: ['Arcana', 'History', 'Investigation', 'Nature', 'Religion'],
+  WIS: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
+  CHA: ['Deception', 'Intimidation', 'Performance', 'Persuasion']
+};
+var conditionLabels = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious'];
+var characterTemplate = {
+  name: '',
+  race: '',
+  class: '',
+  level: 1,
+  background: '',
+  armorClass: 10,
+  initiative: 0,
+  speed: 30,
+  passivePerception: 10,
+  proficiencyBonus: 2,
+  stats: {
+    STR: 10,
+    DEX: 10,
+    CON: 10,
+    INT: 10,
+    WIS: 10,
+    CHA: 10
+  },
+  health: {
+    current: 10,
+    max: 10,
+    temp: 0
+  },
+  money: {
+    PP: 0,
+    GP: 0,
+    SP: 0,
+    CP: 0
+  },
+  spellSlots: function () {
+    var slots = [];
+    for (var slotIndex = 0; slotIndex < 9; slotIndex += 1) {
+      slots.push({
+        level: slotIndex + 1,
         max: 0,
-        used: 0,
-      })),
-      combatCounters: {
-        damageTaken: 0,
-        damageDealt: 0,
-        healingReceived: 0,
-        healingGiven: 0,
-        tempHp: 0,
-      },
-      conditions: {
-        blinded: false,
-        charmed: false,
-        deafened: false,
-        frightened: false,
-        grappled: false,
-        incapacitated: false,
-        invisible: false,
-        paralyzed: false,
-        petrified: false,
-        poisoned: false,
-        prone: false,
-        restrained: false,
-        stunned: false,
-        unconscious: false,
-        exhaustion: 0,
-      },
-      spellcasting: {
-        saveDc: 8,
-        attackBonus: 0,
-        ability: 'INT',
-      },
-      classResources: [
-        { name: 'Channel Divinity', value: 0 },
-        { name: 'Sorcery Points', value: 0 },
-        { name: 'Ki Points', value: 0 },
-        { name: 'Bardic Inspiration', value: 0 },
-        { name: 'Rage', value: 0 },
-        { name: 'Wild Shape', value: 0 },
-      ],
-      inventory: [
-        { name: 'Healing Potion', quantity: 3 },
-        { name: 'Torch', quantity: 5 },
-        { name: 'Holy Water', quantity: 2 },
-      ],
-      notes: '',
-      skills: {},
-      preferences: {
-        autoSave: true,
-      },
+        used: 0
+      });
+    }
+    return slots;
+  }(),
+  combatCounters: {
+    damageTaken: 0,
+    damageDealt: 0,
+    healingReceived: 0,
+    healingGiven: 0,
+    tempHp: 0
+  },
+  conditions: {
+    blinded: false,
+    charmed: false,
+    deafened: false,
+    frightened: false,
+    grappled: false,
+    incapacitated: false,
+    invisible: false,
+    paralyzed: false,
+    petrified: false,
+    poisoned: false,
+    prone: false,
+    restrained: false,
+    stunned: false,
+    unconscious: false,
+    exhaustion: 0
+  },
+  spellcasting: {
+    saveDc: 8,
+    attackBonus: 0,
+    ability: 'INT'
+  },
+  classResources: [{
+    name: 'Channel Divinity',
+    value: 0
+  }, {
+    name: 'Sorcery Points',
+    value: 0
+  }, {
+    name: 'Ki Points',
+    value: 0
+  }, {
+    name: 'Bardic Inspiration',
+    value: 0
+  }, {
+    name: 'Rage',
+    value: 0
+  }, {
+    name: 'Wild Shape',
+    value: 0
+  }],
+  inventory: [{
+    name: 'Healing Potion',
+    quantity: 3
+  }, {
+    name: 'Torch',
+    quantity: 5
+  }, {
+    name: 'Holy Water',
+    quantity: 2
+  }],
+  notes: '',
+  skills: {},
+  preferences: {
+    autoSave: true
+  }
+};
+var character = loadCharacter();
+var currentSection = 0;
+var currentSubpage = 0;
+var selectedAbility = 'INT';
+var sectionNav = document.getElementById('sectionNav');
+var subpageNav = document.getElementById('subpageNav');
+var contentShell = document.getElementById('contentShell');
+var headerTitle = document.getElementById('headerTitle');
+var statusBar = document.getElementById('statusBar');
+function saveCharacter() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(character));
+  if (character.preferences.autoSave !== false) {
+    statusBar.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+  }
+}
+function loadCharacter() {
+  try {
+    var stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      var parsed = JSON.parse(stored);
+      return mergeCharacter(characterTemplate, parsed);
+    }
+  } catch (error) {
+    console.error('Unable to load character', error);
+  }
+  return JSON.parse(JSON.stringify(characterTemplate));
+}
+function mergeCharacter(template, data) {
+  if (data === null || data === undefined) {
+    return template === undefined ? null : JSON.parse(JSON.stringify(template));
+  }
+  if (template === undefined || template === null) {
+    if (Array.isArray(data)) {
+      return data.map(function (item) {
+        return mergeCharacter(undefined, item);
+      });
+    }
+    if (_typeof(data) === 'object') {
+      var merged = {};
+      for (var key in data) {
+        merged[key] = mergeCharacter(undefined, data[key]);
+      }
+      return merged;
+    }
+    return data;
+  }
+  if (Array.isArray(data)) {
+    if (!Array.isArray(template)) {
+      return data.map(function (item) {
+        return mergeCharacter(undefined, item);
+      });
+    }
+    return data.map(function (item, idx) {
+      return mergeCharacter(template[idx], item);
+    });
+  }
+  if (_typeof(data) === 'object' && !Array.isArray(data)) {
+    var _merged = JSON.parse(JSON.stringify(template));
+    var _loop = function _loop(_key) {
+      if (data[_key] === null || data[_key] === undefined) return 1;
+      if (_typeof(data[_key]) === 'object' && !Array.isArray(data[_key])) {
+        _merged[_key] = mergeCharacter(_merged[_key], data[_key]);
+      } else if (Array.isArray(data[_key]) && Array.isArray(_merged[_key])) {
+        _merged[_key] = data[_key].map(function (item, idx) {
+          return mergeCharacter(_merged[_key][idx], item);
+        });
+      } else {
+        _merged[_key] = data[_key];
+      }
     };
-
-    let character = loadCharacter();
-    let currentSection = 0;
-    let currentSubpage = 0;
-    let selectedAbility = 'INT';
-
-    const sectionNav = document.getElementById('sectionNav');
-    const subpageNav = document.getElementById('subpageNav');
-    const contentShell = document.getElementById('contentShell');
-    const headerTitle = document.getElementById('headerTitle');
-    const statusBar = document.getElementById('statusBar');
-
-    function saveCharacter() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(character));
-      if (character.preferences.autoSave !== false) {
-        statusBar.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+    for (var _key in data) {
+      if (_loop(_key)) continue;
+    }
+    return _merged;
+  }
+  return data;
+}
+function ensureSkillData() {
+  if (!character.skills || _typeof(character.skills) !== 'object') {
+    character.skills = {};
+  }
+  abilityOrder.forEach(function (ability) {
+    if (!character.skills[ability]) {
+      character.skills[ability] = {};
+    }
+    skillNames[ability].forEach(function (skill) {
+      if (!character.skills[ability][skill]) {
+        character.skills[ability][skill] = {
+          modifier: 0,
+          proficiency: 'NONE'
+        };
       }
+    });
+  });
+}
+function createButton(text, handler) {
+  var extraClass = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+  var button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = text;
+  button.className = 'large-button ' + extraClass;
+  button.addEventListener('click', handler);
+  return button;
+}
+function createField(labelText, key, type, value) {
+  var attrs = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+  var onUpdate = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+  var wrapper = document.createElement('div');
+  wrapper.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = labelText;
+  var input = document.createElement('input');
+  input.type = type;
+  input.value = value;
+  for (var attr in attrs) {
+    if (Object.prototype.hasOwnProperty.call(attrs, attr)) {
+      input.setAttribute(attr, attrs[attr]);
     }
-
-    function loadCharacter() {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          return mergeCharacter(characterTemplate, parsed);
-        }
-      } catch (error) {
-        console.error('Unable to load character', error);
-      }
-      return JSON.parse(JSON.stringify(characterTemplate));
+  }
+  input.addEventListener('input', function () {
+    if (type === 'number') {
+      character[key] = Number(input.value) || 0;
+    } else {
+      character[key] = input.value;
     }
-
-    function mergeCharacter(template, data) {
-      if (data === null || data === undefined) {
-        return template === undefined ? null : JSON.parse(JSON.stringify(template));
-      }
-
-      if (template === undefined || template === null) {
-        if (Array.isArray(data)) {
-          return data.map(item => mergeCharacter(undefined, item));
-        }
-        if (typeof data === 'object') {
-          const merged = {};
-          for (const key in data) {
-            merged[key] = mergeCharacter(undefined, data[key]);
-          }
-          return merged;
-        }
-        return data;
-      }
-
-      if (Array.isArray(data)) {
-        if (!Array.isArray(template)) {
-          return data.map(item => mergeCharacter(undefined, item));
-        }
-        return data.map((item, idx) => mergeCharacter(template[idx], item));
-      }
-
-      if (typeof data === 'object' && !Array.isArray(data)) {
-        const merged = JSON.parse(JSON.stringify(template));
-        for (const key in data) {
-          if (data[key] === null || data[key] === undefined) continue;
-          if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
-            merged[key] = mergeCharacter(merged[key], data[key]);
-          } else if (Array.isArray(data[key]) && Array.isArray(merged[key])) {
-            merged[key] = data[key].map((item, idx) => mergeCharacter(merged[key][idx], item));
-          } else {
-            merged[key] = data[key];
-          }
-        }
-        return merged;
-      }
-
-      return data;
-    }
-
-    function ensureSkillData() {
-      if (!character.skills || typeof character.skills !== 'object') {
-        character.skills = {};
-      }
-      abilityOrder.forEach(ability => {
-        if (!character.skills[ability]) {
-          character.skills[ability] = {};
-        }
-        skillNames[ability].forEach(skill => {
-          if (!character.skills[ability][skill]) {
-            character.skills[ability][skill] = { modifier: 0, proficiency: 'NONE' };
-          }
-        });
-      });
-    }
-
-    function createButton(text, handler, extraClass = '') {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = text;
-      button.className = 'large-button ' + extraClass;
-      button.addEventListener('click', handler);
-      return button;
-    }
-
-    function createField(labelText, key, type, value, attrs = {}, onUpdate = null) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'field';
-      const label = document.createElement('label');
-      label.textContent = labelText;
-      const input = document.createElement('input');
-      input.type = type;
-      input.value = value;
-      Object.entries(attrs).forEach(([attr, val]) => input.setAttribute(attr, val));
-      input.addEventListener('input', () => {
-        if (type === 'number') {
-          character[key] = Number(input.value) || 0;
-        } else {
-          character[key] = input.value;
-        }
-        if (onUpdate) onUpdate();
-        saveCharacter();
-      });
-      wrapper.append(label, input);
-      return wrapper;
-    }
-
-    function createNumberField(labelText, key, value, attrs = {}, onUpdate = null) {
-      return createField(labelText, key, 'number', value, attrs, onUpdate);
-    }
-
-    function createTextField(labelText, key, value, attrs = {}, onUpdate = null) {
-      return createField(labelText, key, 'text', value, attrs, onUpdate);
-    }
-
-    function renderApp() {
-      ensureSkillData();
-      renderSectionNav();
-      renderSubpageNav();
-      renderContent();
-    }
-
-    function renderSectionNav() {
-      sectionNav.innerHTML = '';
-      sectionConfig.forEach((section, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = section.name;
-        button.className = index === currentSection ? 'active' : '';
-        button.addEventListener('click', () => {
-          currentSection = index;
-          currentSubpage = 0;
-          selectedAbility = 'INT';
-          renderApp();
-        });
-        sectionNav.appendChild(button);
-      });
-    }
-
-    function renderSubpageNav() {
-      const section = sectionConfig[currentSection];
-      subpageNav.innerHTML = '';
-      section.subpages.forEach((subpage, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = subpage.label;
-        button.className = index === currentSubpage ? 'active' : '';
-        button.addEventListener('click', () => {
-          currentSubpage = index;
-          if (section.name === 'Character' && subpage.key === 'skills') {
-            selectedAbility = 'INT';
-          }
-          renderContent();
-          renderSubpageNav();
-        });
-        subpageNav.appendChild(button);
-      });
-    }
-
-    function renderContent() {
-      const section = sectionConfig[currentSection];
-      const subpage = section.subpages[currentSubpage];
-      headerTitle.textContent = `${section.name} · ${subpage.label}`;
-      contentShell.innerHTML = '';
-      const panel = document.createElement('div');
-      panel.className = 'panel';
-      const subpageKey = sectionConfig[currentSection].subpages[currentSubpage].key;
-      switch (currentSection) {
-        case 0:
-          panel.appendChild(buildCombatContent(subpageKey));
-          break;
-        case 1:
-          panel.appendChild(buildCharacterContent(subpageKey));
-          break;
-        case 2:
-          panel.appendChild(buildMagicContent(subpageKey));
-          break;
-        case 3:
-          panel.appendChild(buildInventoryContent(subpageKey));
-          break;
-        default:
-          panel.appendChild(buildSettingsContent());
-      }
-      contentShell.appendChild(panel);
-    }
-
-    function buildCombatContent(key) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'stack';
-      switch (key) {
-        case 'health':
-          wrapper.appendChild(buildHealthPage());
-          break;
-        case 'spellSlots':
-          wrapper.appendChild(buildSpellSlotsPage());
-          break;
-        case 'counters':
-          wrapper.appendChild(buildCombatCountersPage());
-          break;
-        case 'deathSaves':
-          wrapper.appendChild(buildDeathSavesPage());
-          break;
-        default:
-          wrapper.appendChild(buildConditionsPage());
-      }
-      return wrapper;
-    }
-
-    function buildHealthPage() {
-      const section = document.createElement('div');
-      section.className = 'stack';
-      section.appendChild(createHealthCard('Current HP', 'current'));
-      section.appendChild(createHealthCard('Max HP', 'max'));
-      section.appendChild(createHealthCard('Temporary HP', 'temp'));
-      return section;
-    }
-
-    function createHealthCard(labelText, key) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = labelText;
-      let valueElement;
-      if (key === 'max') {
-        valueElement = document.createElement('input');
-        valueElement.type = 'number';
-        valueElement.className = 'card-input';
-        valueElement.value = character.health[key];
-        valueElement.addEventListener('input', () => {
-          character.health[key] = Math.max(0, Number(valueElement.value) || 0);
-          if (character.health.current > character.health.max) {
-            character.health.current = character.health.max;
-          }
-          renderContent();
-          saveCharacter();
-        });
-      } else {
-        valueElement = document.createElement('div');
-        valueElement.className = 'card-value';
-        valueElement.textContent = character.health[key];
-      }
-      card.append(title, valueElement);
-      if (key !== 'max') {
-        const buttonRow = document.createElement('div');
-        buttonRow.className = 'button-row';
-        ['-10', '-5', '+5', '+10'].forEach(label => {
-          const button = document.createElement('div');
-          button.className = 'pill';
-          button.textContent = label;
-          const delta = Number(label);
-          button.addEventListener('click', () => {
-            const max = key === 'current' ? character.health.max : 999;
-            character.health[key] = Math.max(0, Math.min(max, character.health[key] + delta));
-            if (key === 'max' && character.health.current > character.health.max) {
-              character.health.current = character.health.max;
-            }
-            renderContent();
-            saveCharacter();
-          });
-          buttonRow.appendChild(button);
-        });
-        card.appendChild(buttonRow);
-      }
-      return card;
-    }
-
-    function buildSpellSlotsPage() {
-      const section = document.createElement('div');
-      section.className = 'card';
-      const subtitle = document.createElement('div');
-      subtitle.className = 'help-text';
-      const info = getSpellcastingInfo();
-      subtitle.textContent = `Spellcasting: ${info.type} (${info.subclass})`;
-      const grid = document.createElement('div');
-      grid.className = 'spell-grid';
-      const visibleLevels = getVisibleSpellLevels();
-      if (visibleLevels.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'help-text';
-        empty.textContent = 'No spell slots are available at this character level.';
-        grid.appendChild(empty);
-      } else {
-        visibleLevels.forEach(level => grid.appendChild(createSpellSlotRow(level)));
-      }
-      const actionRow = document.createElement('div');
-      actionRow.className = 'button-row';
-      actionRow.appendChild(createButton('Restore All', restoreAllSlots));
-      actionRow.appendChild(createButton('Clear All', clearAllSlots));
-      section.append(subtitle, grid, actionRow);
-      return section;
-    }
-
-    function createSpellSlotRow(level) {
-      const row = document.createElement('div');
-      row.className = 'spell-row';
-      const label = document.createElement('div');
-      label.className = 'spell-level';
-      const badge = document.createElement('div');
-      badge.className = 'spell-badge';
-      badge.textContent = level;
-      const labelText = document.createElement('div');
-      labelText.textContent = `Level ${level}`;
-      label.append(badge, labelText);
-      const totalBox = document.createElement('div');
-      totalBox.className = 'field';
-      const maxInput = document.createElement('input');
-      maxInput.type = 'number';
-      maxInput.min = 0;
-      maxInput.value = getSpellLevelSlots(level);
-      maxInput.addEventListener('input', () => {
-        const slot = getOrCreateSpellSlot(level);
-        slot.max = Math.max(0, Number(maxInput.value) || 0);
-        if (slot.used > slot.max) slot.used = slot.max;
-        renderContent();
-        saveCharacter();
-      });
-      totalBox.append(maxInput);
-      const circles = document.createElement('div');
-      circles.className = 'spell-circles';
-      const slot = getOrCreateSpellSlot(level);
-      slot.max = Number(maxInput.value);
-      createSlotCircles(slot, circles);
-      row.append(label, totalBox, circles);
-      row.dataset.level = level;
-      return row;
-    }
-
-    function getSpellcastingInfo() {
-      const className = String(character.class || '').trim();
-      const normalized = className.toLowerCase();
-      if (halfCasterClasses.includes(normalized)) {
-        return { type: 'Half Caster', subclass: className || 'Half Caster' };
-      }
-      return { type: 'Spellcasting', subclass: className || 'Prepared' };
-    }
-
-    function getSpellLevelSlots(level) {
-      const info = getSpellcastingInfo();
-      if (info.type === 'Half Caster') {
-        const charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
-        return halfCasterProgression[charLevel][level] || 0;
-      }
-      const stored = character.spellSlots.find(s => s.level === level);
-      return stored ? stored.max : 0;
-    }
-
-    function getVisibleSpellLevels() {
-      const info = getSpellcastingInfo();
-      if (info.type === 'Half Caster') {
-        const charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
-        const available = halfCasterProgression[charLevel];
-        return spellLevels.filter(level => available[level] > 0);
-      }
-      return spellLevels;
-    }
-
-    function getOrCreateSpellSlot(level) {
-      let slot = character.spellSlots.find(s => s.level === level);
-      if (!slot) {
-        slot = { level, max: 0, used: 0 };
-        character.spellSlots.push(slot);
-      }
-      return slot;
-    }
-
-    function createSlotCircles(slot, container) {
-      container.innerHTML = '';
-      for (let i = 0; i < slot.max; i += 1) {
-        const circle = document.createElement('div');
-        circle.className = 'slot-circle' + (i < slot.used ? ' used' : '');
-        circle.textContent = i + 1;
-        circle.addEventListener('click', () => {
-          slot.used = i + 1 === slot.used ? i : i + 1;
-          if (slot.used > slot.max) slot.used = slot.max;
-          renderContent();
-          saveCharacter();
-        });
-        container.appendChild(circle);
-      }
-    }
-
-    function restoreAllSlots() {
-      character.spellSlots.forEach(slot => { slot.used = 0; });
-      renderContent();
-      saveCharacter();
-    }
-
-    function clearAllSlots() {
-      character.spellSlots.forEach(slot => {
-        slot.max = 0;
-        slot.used = 0;
-      });
-      renderContent();
-      saveCharacter();
-    }
-
-    function buildCombatCountersPage() {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'counter-grid';
-      const counters = [
-        { key: 'damageTaken', label: 'Damage Taken' },
-        { key: 'damageDealt', label: 'Damage Dealt' },
-        { key: 'healingReceived', label: 'Healing Received' },
-        { key: 'healingGiven', label: 'Healing Given' },
-        { key: 'tempHp', label: 'Temporary HP' },
-      ];
-      counters.forEach(counter => {
-        const card = document.createElement('div');
-        card.className = 'counter-card';
-        const title = document.createElement('div');
-        title.className = 'card-title';
-        title.textContent = counter.label;
-        const row = document.createElement('div');
-        row.className = 'counter-row';
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.className = 'counter-input';
-        input.value = character.combatCounters[counter.key];
-        input.addEventListener('input', () => {
-          character.combatCounters[counter.key] = Number(input.value) || 0;
-          saveCharacter();
-        });
-        const plus = document.createElement('div');
-        plus.className = 'pill';
-        plus.textContent = '+';
-        plus.addEventListener('click', () => {
-          character.combatCounters[counter.key] = (Number(character.combatCounters[counter.key]) || 0) + 1;
-          input.value = character.combatCounters[counter.key];
-          saveCharacter();
-        });
-        row.append(input, plus);
-        card.append(title, row);
-        wrapper.appendChild(card);
-      });
-      return wrapper;
-    }
-
-    function buildDeathSavesPage() {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'death-save-grid';
-      const buildGroup = (label, type) => {
-        const group = document.createElement('div');
-        group.className = 'save-group card';
-        const title = document.createElement('div');
-        title.className = 'card-title';
-        title.textContent = label;
-        const circles = document.createElement('div');
-        circles.className = 'save-circles';
-        const values = type === 'success' ? [0, 1, 2] : [0, 1, 2];
-        const stateKey = type === 'success' ? 'successes' : 'failures';
-        values.forEach(index => {
-          const circle = document.createElement('div');
-          circle.className = 'save-circle';
-          circle.textContent = index + 1;
-          circle.addEventListener('click', () => {
-            const current = character.deathSaves?.[stateKey] || 0;
-            character.deathSaves = character.deathSaves || {};
-            character.deathSaves[stateKey] = index === current ? 0 : index + 1;
-            renderContent();
-            saveCharacter();
-          });
-          circles.appendChild(circle);
-        });
-        const reset = document.createElement('button');
-        reset.type = 'button';
-        reset.className = 'large-button';
-        reset.textContent = 'Reset';
-        reset.addEventListener('click', () => {
-          character.deathSaves = { successes: 0, failures: 0 };
-          renderContent();
-          saveCharacter();
-        });
-        group.append(title, circles, reset);
-        return group;
-      };
-      wrapper.append(buildGroup('Successes', 'success'), buildGroup('Failures', 'failure'));
-      return wrapper;
-    }
-
-    function buildConditionsPage() {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = 'Conditions';
-      const list = document.createElement('div');
-      list.className = 'conditions-grid';
-      conditionLabels.forEach(label => {
-        const row = document.createElement('div');
-        row.className = 'condition-row';
-        const conditionKey = label.toLowerCase();
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = Boolean(character.conditions?.[conditionKey]);
-        input.addEventListener('change', () => {
-          if (conditionKey === 'exhaustion') {
-            character.conditions.exhaustion = Number(input.value) || 0;
-          } else {
-            character.conditions[conditionKey] = input.checked;
-          }
-          saveCharacter();
-        });
-        const labelEl = document.createElement('div');
-        labelEl.className = 'condition-label';
-        labelEl.textContent = label;
-        row.append(input, labelEl);
-        if (label === 'Exhaustion') {
-          const exhaustionInput = document.createElement('input');
-          exhaustionInput.type = 'number';
-          exhaustionInput.min = 0;
-          exhaustionInput.max = 6;
-          exhaustionInput.className = 'exhaustion-input';
-          exhaustionInput.value = character.conditions.exhaustion || 0;
-          exhaustionInput.addEventListener('input', () => {
-            character.conditions.exhaustion = Math.max(0, Math.min(6, Number(exhaustionInput.value) || 0));
-            saveCharacter();
-          });
-          row.appendChild(exhaustionInput);
-        }
-        list.appendChild(row);
-      });
-      wrapper.append(title, list);
-      return wrapper;
-    }
-
-    function buildCharacterContent(key) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'stack';
-      switch (key) {
-        case 'characterInfo':
-          wrapper.appendChild(buildCharacterInfoPage());
-          break;
-        case 'abilities':
-          wrapper.appendChild(buildAbilityScoresPage());
-          break;
-        default:
-          wrapper.appendChild(buildSkillsPage());
-      }
-      return wrapper;
-    }
-
-    function buildCharacterInfoPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const grid = document.createElement('div');
-      grid.className = 'grid-2';
-      const fields = [
-        ['Name', 'name', 'text', character.name],
-        ['Class', 'class', 'text', character.class],
-        ['Level', 'level', 'number', character.level, { min: 1, max: 20 }],
-        ['Race', 'race', 'text', character.race],
-        ['Background', 'background', 'text', character.background],
-        ['Armor Class', 'armorClass', 'number', character.armorClass, { min: 0 }],
-        ['Initiative', 'initiative', 'number', character.initiative, { min: -20, max: 20 }],
-        ['Speed', 'speed', 'number', character.speed, { min: 0 }],
-        ['Passive Perception', 'passivePerception', 'number', character.passivePerception, { min: 0 }],
-        ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, { min: 0 }],
-      ];
-      fields.forEach(([label, key, type, value, attrs]) => {
-        const field = createField(label, key, type, value, attrs || {}, () => {
-          if (['class', 'level'].includes(key)) {
-            renderContent();
-          }
-        });
-        grid.appendChild(field);
-      });
-      card.appendChild(grid);
-      return card;
-    }
-
-    function buildAbilityScoresPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = 'Ability Scores';
-      const list = document.createElement('div');
-      list.className = 'stack';
-      abilityOrder.forEach(ability => {
-        const row = document.createElement('div');
-        row.className = 'ability-row';
-        const name = document.createElement('div');
-        name.className = 'ability-name';
-        name.textContent = ability;
-        const score = document.createElement('div');
-        score.className = 'stat-value';
-        score.textContent = character.stats[ability];
-        const modifier = document.createElement('div');
-        modifier.className = 'modifier-value';
-        modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'inline-pill';
-        button.textContent = 'Skills >';
-        button.addEventListener('click', () => {
-          selectedAbility = ability;
-          currentSection = 1;
-          currentSubpage = 2;
-          renderApp();
-        });
-        row.append(name, score, modifier, button);
-        list.appendChild(row);
-      });
-      card.append(title, list);
-      return card;
-    }
-
-    function buildSkillsPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = `${selectedAbility} Skills`;
-      const list = document.createElement('div');
-      list.className = 'stack';
-      const skills = skillNames[selectedAbility] || [];
-      if (skills.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'help-text';
-        empty.textContent = 'No skills are listed for this ability.';
-        list.appendChild(empty);
-      } else {
-        skills.forEach(skill => {
-          const row = document.createElement('div');
-          row.className = 'skill-row';
-          const skillName = document.createElement('div');
-          skillName.className = 'skill-name';
-          skillName.textContent = skill;
-          const modifierValue = document.createElement('input');
-          modifierValue.type = 'number';
-          modifierValue.className = 'stat-value';
-          modifierValue.value = character.skills[selectedAbility][skill].modifier;
-          modifierValue.addEventListener('input', () => {
-            character.skills[selectedAbility][skill].modifier = Number(modifierValue.value) || 0;
-            saveCharacter();
-          });
-          const proficiency = document.createElement('button');
-          proficiency.type = 'button';
-          proficiency.className = 'small-pill';
-          proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
-          proficiency.addEventListener('click', () => {
-            const states = ['NONE', 'PROF', 'EXP'];
-            const current = states.indexOf(character.skills[selectedAbility][skill].proficiency);
-            character.skills[selectedAbility][skill].proficiency = states[(current + 1) % states.length];
-            proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
-            saveCharacter();
-          });
-          row.append(skillName, modifierValue, proficiency);
-          list.appendChild(row);
-        });
-      }
-      card.append(title, list);
-      return card;
-    }
-
-    function buildMagicContent(key) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'stack';
-      switch (key) {
-        case 'spellcasting':
-          wrapper.appendChild(buildSpellcastingPage());
-          break;
-        default:
-          wrapper.appendChild(buildResourcesPage());
-      }
-      return wrapper;
-    }
-
-    function buildSpellcastingPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const grid = document.createElement('div');
-      grid.className = 'grid-2';
-      grid.append(
-        createNumberField('Spell Save DC', 'spellSaveDc', character.spellcasting.saveDc, { min: 0 }, () => {}),
-        createNumberField('Spell Attack Bonus', 'spellAttackBonus', character.spellcasting.attackBonus, { min: -20, max: 20 }, () => {})
-      );
-      const abilityField = document.createElement('div');
-      abilityField.className = 'field';
-      const label = document.createElement('label');
-      label.textContent = 'Spellcasting Ability';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = character.spellcasting.ability;
-      input.addEventListener('input', () => {
-        character.spellcasting.ability = input.value.toUpperCase();
-        saveCharacter();
-      });
-      abilityField.append(label, input);
-      grid.appendChild(abilityField);
-      card.appendChild(grid);
-      return card;
-    }
-
-    function buildResourcesPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = 'Class Resources';
-      const list = document.createElement('div');
-      list.className = 'stack';
-      character.classResources.forEach((resource, index) => {
-        const row = document.createElement('div');
-        row.className = 'resource-row';
-        const name = document.createElement('input');
-        name.type = 'text';
-        name.value = resource.name;
-        name.className = 'resource-name';
-        name.addEventListener('input', () => {
-          character.classResources[index].name = name.value;
-          saveCharacter();
-        });
-        const value = document.createElement('input');
-        value.type = 'number';
-        value.className = 'resource-value';
-        value.value = resource.value;
-        value.addEventListener('input', () => {
-          character.classResources[index].value = Number(value.value) || 0;
-          saveCharacter();
-        });
-        const minus = document.createElement('div');
-        minus.className = 'pill';
-        minus.textContent = '-';
-        minus.addEventListener('click', () => {
-          character.classResources[index].value = Math.max(0, Number(character.classResources[index].value) - 1);
-          value.value = character.classResources[index].value;
-          saveCharacter();
-        });
-        const plus = document.createElement('div');
-        plus.className = 'pill';
-        plus.textContent = '+';
-        plus.addEventListener('click', () => {
-          character.classResources[index].value = Number(character.classResources[index].value) + 1;
-          value.value = character.classResources[index].value;
-          saveCharacter();
-        });
-        row.append(name, value, minus, plus);
-        list.appendChild(row);
-      });
-      const addButton = createButton('Add Resource', () => {
-        character.classResources.push({ name: 'New Resource', value: 0 });
-        renderContent();
-        saveCharacter();
-      });
-      card.append(title, list, addButton);
-      return card;
-    }
-
-    function buildInventoryContent(key) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'stack';
-      switch (key) {
-        case 'money':
-          wrapper.appendChild(buildMoneyPage());
-          break;
-        case 'inventory':
-          wrapper.appendChild(buildInventoryPage());
-          break;
-        default:
-          wrapper.appendChild(buildNotesPage());
-      }
-      return wrapper;
-    }
-
-    function buildMoneyPage() {
-      const section = document.createElement('div');
-      section.className = 'card';
-      moneyKeys.forEach(currency => {
-        const row = document.createElement('div');
-        row.className = 'resource-row';
-        const title = document.createElement('div');
-        title.className = 'label-text';
-        title.textContent = currencyLabels[currency] || currency;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.className = 'resource-value';
-        input.value = character.money[currency];
-        input.addEventListener('input', () => {
-          character.money[currency] = Math.max(0, Number(input.value) || 0);
-          saveCharacter();
-        });
-        const minus = document.createElement('div');
-        minus.className = 'pill';
-        minus.textContent = '-';
-        minus.addEventListener('click', () => {
-          character.money[currency] = Math.max(0, Number(character.money[currency]) - 1);
-          input.value = character.money[currency];
-          saveCharacter();
-        });
-        const plus = document.createElement('div');
-        plus.className = 'pill';
-        plus.textContent = '+';
-        plus.addEventListener('click', () => {
-          character.money[currency] = Number(character.money[currency]) + 1;
-          input.value = character.money[currency];
-          saveCharacter();
-        });
-        row.append(title, input, minus, plus);
-        section.appendChild(row);
-      });
-      return section;
-    }
-
-    function buildInventoryPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const list = document.createElement('div');
-      list.className = 'stack';
-      character.inventory.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = 'inventory-row';
-        const name = document.createElement('input');
-        name.type = 'text';
-        name.value = item.name;
-        name.className = 'item-name';
-        name.addEventListener('input', () => {
-          character.inventory[index].name = name.value;
-          saveCharacter();
-        });
-        const quantity = document.createElement('input');
-        quantity.type = 'number';
-        quantity.min = 0;
-        quantity.className = 'quantity-value';
-        quantity.value = item.quantity;
-        quantity.addEventListener('input', () => {
-          character.inventory[index].quantity = Math.max(0, Number(quantity.value) || 0);
-          saveCharacter();
-        });
-        const minus = document.createElement('div');
-        minus.className = 'pill';
-        minus.textContent = '-';
-        minus.addEventListener('click', () => {
-          character.inventory[index].quantity = Math.max(0, Number(character.inventory[index].quantity) - 1);
-          quantity.value = character.inventory[index].quantity;
-          saveCharacter();
-        });
-        const plus = document.createElement('div');
-        plus.className = 'pill';
-        plus.textContent = '+';
-        plus.addEventListener('click', () => {
-          character.inventory[index].quantity = Number(character.inventory[index].quantity) + 1;
-          quantity.value = character.inventory[index].quantity;
-          saveCharacter();
-        });
-        row.append(name, quantity, minus, plus);
-        list.appendChild(row);
-      });
-      const addButton = createButton('Add Item', () => {
-        character.inventory.push({ name: 'New Item', quantity: 1 });
-        renderContent();
-        saveCharacter();
-      });
-      card.append(list, addButton);
-      return card;
-    }
-
-    function buildNotesPage() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const label = document.createElement('div');
-      label.className = 'label-text';
-      label.textContent = 'Notes';
-      const textarea = document.createElement('textarea');
-      textarea.value = character.notes || '';
-      textarea.addEventListener('input', () => {
-        character.notes = textarea.value;
-        saveCharacter();
-      });
-      card.append(label, textarea);
-      return card;
-    }
-
-    function buildSettingsContent() {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const buttons = [
-        ['Export Character', handleExport],
-        ['Import Character', handleImport],
-        ['Reset Character', handleReset],
-      ];
-      buttons.forEach(([label, handler]) => card.appendChild(createButton(label, handler)));
-      const preferenceCard = document.createElement('div');
-      preferenceCard.className = 'card';
-      const prefLabel = document.createElement('div');
-      prefLabel.className = 'label-text';
-      prefLabel.textContent = 'Preferences';
-      const prefRow = document.createElement('div');
-      prefRow.className = 'condition-row';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = character.preferences.autoSave !== false;
-      checkbox.addEventListener('change', () => {
-        character.preferences.autoSave = checkbox.checked;
-        saveCharacter();
-      });
-      const prefText = document.createElement('div');
-      prefText.className = 'condition-label';
-      prefText.textContent = 'Auto-save';
-      prefRow.append(checkbox, prefText);
-      preferenceCard.append(prefLabel, prefRow);
-      const textareaWrap = document.createElement('div');
-      textareaWrap.className = 'card';
-      const help = document.createElement('div');
-      help.className = 'help-text';
-      help.textContent = 'Paste JSON here for import, or copy exported JSON.';
-      const textarea = document.createElement('textarea');
-      textarea.id = 'jsonArea';
-      textarea.placeholder = '{ "name": "..." }';
-      textareaWrap.append(help, textarea);
-      card.append(preferenceCard, textareaWrap);
-      return card;
-    }
-
-    function handleExport() {
-      const jsonArea = document.getElementById('jsonArea');
-      const exportText = JSON.stringify(character, null, 2);
-      jsonArea.value = exportText;
-      copyText(exportText);
-      statusBar.textContent = 'Character JSON copied to clipboard and shown below.';
-    }
-
-    function handleImport() {
-      const jsonArea = document.getElementById('jsonArea');
-      try {
-        const parsed = JSON.parse(jsonArea.value);
-        character = mergeCharacter(characterTemplate, parsed);
-        renderApp();
-        saveCharacter();
-        statusBar.textContent = 'Character imported successfully.';
-      } catch (error) {
-        statusBar.textContent = 'Invalid JSON import. Check your data.';
-      }
-    }
-
-    function handleReset() {
-      localStorage.removeItem(STORAGE_KEY);
-      character = JSON.parse(JSON.stringify(characterTemplate));
+    if (onUpdate) onUpdate();
+    saveCharacter();
+  });
+  wrapper.append(label, input);
+  return wrapper;
+}
+function createNumberField(labelText, key, value) {
+  var attrs = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  var onUpdate = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  return createField(labelText, key, 'number', value, attrs, onUpdate);
+}
+function createTextField(labelText, key, value) {
+  var attrs = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  var onUpdate = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+  return createField(labelText, key, 'text', value, attrs, onUpdate);
+}
+function renderApp() {
+  ensureSkillData();
+  renderSectionNav();
+  renderSubpageNav();
+  renderContent();
+}
+function renderSectionNav() {
+  sectionNav.innerHTML = '';
+  sectionConfig.forEach(function (section, index) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = section.name;
+    button.className = index === currentSection ? 'active' : '';
+    button.addEventListener('click', function () {
+      currentSection = index;
+      currentSubpage = 0;
+      selectedAbility = 'INT';
       renderApp();
-      saveCharacter();
-      statusBar.textContent = 'Save cleared. Template restored.';
-    }
-
-    function copyText(text) {
-      try {
-        navigator.clipboard.writeText(text).catch(() => {});
-      } catch (error) {
-        console.warn('Clipboard not available.', error);
+    });
+    sectionNav.appendChild(button);
+  });
+}
+function renderSubpageNav() {
+  var section = sectionConfig[currentSection];
+  subpageNav.innerHTML = '';
+  section.subpages.forEach(function (subpage, index) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = subpage.label;
+    button.className = index === currentSubpage ? 'active' : '';
+    button.addEventListener('click', function () {
+      currentSubpage = index;
+      if (section.name === 'Character' && subpage.key === 'skills') {
+        selectedAbility = 'INT';
       }
+      renderContent();
+      renderSubpageNav();
+    });
+    subpageNav.appendChild(button);
+  });
+}
+function renderContent() {
+  var section = sectionConfig[currentSection];
+  var subpage = section.subpages[currentSubpage];
+  headerTitle.textContent = "".concat(section.name, " \xB7 ").concat(subpage.label);
+  contentShell.innerHTML = '';
+  var panel = document.createElement('div');
+  panel.className = 'panel';
+  var subpageKey = sectionConfig[currentSection].subpages[currentSubpage].key;
+  switch (currentSection) {
+    case 0:
+      panel.appendChild(buildCombatContent(subpageKey));
+      break;
+    case 1:
+      panel.appendChild(buildCharacterContent(subpageKey));
+      break;
+    case 2:
+      panel.appendChild(buildMagicContent(subpageKey));
+      break;
+    case 3:
+      panel.appendChild(buildInventoryContent(subpageKey));
+      break;
+    default:
+      panel.appendChild(buildSettingsContent());
+  }
+  contentShell.appendChild(panel);
+}
+function buildCombatContent(key) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'stack';
+  switch (key) {
+    case 'health':
+      wrapper.appendChild(buildHealthPage());
+      break;
+    case 'spellSlots':
+      wrapper.appendChild(buildSpellSlotsPage());
+      break;
+    case 'counters':
+      wrapper.appendChild(buildCombatCountersPage());
+      break;
+    case 'deathSaves':
+      wrapper.appendChild(buildDeathSavesPage());
+      break;
+    default:
+      wrapper.appendChild(buildConditionsPage());
+  }
+  return wrapper;
+}
+function buildHealthPage() {
+  var section = document.createElement('div');
+  section.className = 'stack';
+  section.appendChild(createHealthCard('Current HP', 'current'));
+  section.appendChild(createHealthCard('Max HP', 'max'));
+  section.appendChild(createHealthCard('Temporary HP', 'temp'));
+  return section;
+}
+function createHealthCard(labelText, key) {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = labelText;
+  var valueElement;
+  if (key === 'max') {
+    valueElement = document.createElement('input');
+    valueElement.type = 'number';
+    valueElement.className = 'card-input';
+    valueElement.value = character.health[key];
+    valueElement.addEventListener('input', function () {
+      character.health[key] = Math.max(0, Number(valueElement.value) || 0);
+      if (character.health.current > character.health.max) {
+        character.health.current = character.health.max;
+      }
+      renderContent();
+      saveCharacter();
+    });
+  } else {
+    valueElement = document.createElement('div');
+    valueElement.className = 'card-value';
+    valueElement.textContent = character.health[key];
+  }
+  card.append(title, valueElement);
+  if (key !== 'max') {
+    var buttonRow = document.createElement('div');
+    buttonRow.className = 'button-row';
+    ['-10', '-5', '+5', '+10'].forEach(function (label) {
+      var button = document.createElement('div');
+      button.className = 'pill';
+      button.textContent = label;
+      var delta = Number(label);
+      button.addEventListener('click', function () {
+        var max = key === 'current' ? character.health.max : 999;
+        character.health[key] = Math.max(0, Math.min(max, character.health[key] + delta));
+        if (key === 'max' && character.health.current > character.health.max) {
+          character.health.current = character.health.max;
+        }
+        renderContent();
+        saveCharacter();
+      });
+      buttonRow.appendChild(button);
+    });
+    card.appendChild(buttonRow);
+  }
+  return card;
+}
+function buildSpellSlotsPage() {
+  var section = document.createElement('div');
+  section.className = 'card';
+  var subtitle = document.createElement('div');
+  subtitle.className = 'help-text';
+  var info = getSpellcastingInfo();
+  subtitle.textContent = "Spellcasting: ".concat(info.type, " (").concat(info.subclass, ")");
+  var grid = document.createElement('div');
+  grid.className = 'spell-grid';
+  var visibleLevels = getVisibleSpellLevels();
+  if (visibleLevels.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'help-text';
+    empty.textContent = 'No spell slots are available at this character level.';
+    grid.appendChild(empty);
+  } else {
+    visibleLevels.forEach(function (level) {
+      return grid.appendChild(createSpellSlotRow(level));
+    });
+  }
+  var actionRow = document.createElement('div');
+  actionRow.className = 'button-row';
+  actionRow.appendChild(createButton('Restore All', restoreAllSlots));
+  actionRow.appendChild(createButton('Clear All', clearAllSlots));
+  section.append(subtitle, grid, actionRow);
+  return section;
+}
+function createSpellSlotRow(level) {
+  var row = document.createElement('div');
+  row.className = 'spell-row';
+  var label = document.createElement('div');
+  label.className = 'spell-level';
+  var badge = document.createElement('div');
+  badge.className = 'spell-badge';
+  badge.textContent = level;
+  var labelText = document.createElement('div');
+  labelText.textContent = "Level ".concat(level);
+  label.append(badge, labelText);
+  var totalBox = document.createElement('div');
+  totalBox.className = 'field';
+  var maxInput = document.createElement('input');
+  maxInput.type = 'number';
+  maxInput.min = 0;
+  maxInput.value = getSpellLevelSlots(level);
+  maxInput.addEventListener('input', function () {
+    var slot = getOrCreateSpellSlot(level);
+    slot.max = Math.max(0, Number(maxInput.value) || 0);
+    if (slot.used > slot.max) slot.used = slot.max;
+    renderContent();
+    saveCharacter();
+  });
+  totalBox.append(maxInput);
+  var circles = document.createElement('div');
+  circles.className = 'spell-circles';
+  var slot = getOrCreateSpellSlot(level);
+  slot.max = Number(maxInput.value);
+  createSlotCircles(slot, circles);
+  row.append(label, totalBox, circles);
+  row.dataset.level = level;
+  return row;
+}
+function getSpellcastingInfo() {
+  var className = String(character.class || '').trim();
+  var normalized = className.toLowerCase();
+  if (halfCasterClasses.includes(normalized)) {
+    return {
+      type: 'Half Caster',
+      subclass: className || 'Half Caster'
+    };
+  }
+  return {
+    type: 'Spellcasting',
+    subclass: className || 'Prepared'
+  };
+}
+function getSpellLevelSlots(level) {
+  var info = getSpellcastingInfo();
+  if (info.type === 'Half Caster') {
+    var charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
+    return halfCasterProgression[charLevel][level] || 0;
+  }
+  var stored = character.spellSlots.find(function (s) {
+    return s.level === level;
+  });
+  return stored ? stored.max : 0;
+}
+function getVisibleSpellLevels() {
+  var info = getSpellcastingInfo();
+  if (info.type === 'Half Caster') {
+    var charLevel = Math.min(20, Math.max(1, Number(character.level) || 1));
+    var available = halfCasterProgression[charLevel];
+    return spellLevels.filter(function (level) {
+      return available[level] > 0;
+    });
+  }
+  return spellLevels;
+}
+function getOrCreateSpellSlot(level) {
+  var slot = character.spellSlots.find(function (s) {
+    return s.level === level;
+  });
+  if (!slot) {
+    slot = {
+      level: level,
+      max: 0,
+      used: 0
+    };
+    character.spellSlots.push(slot);
+  }
+  return slot;
+}
+function createSlotCircles(slot, container) {
+  container.innerHTML = '';
+  var _loop2 = function _loop2(i) {
+    var circle = document.createElement('div');
+    circle.className = 'slot-circle' + (i < slot.used ? ' used' : '');
+    circle.textContent = i + 1;
+    circle.addEventListener('click', function () {
+      slot.used = i + 1 === slot.used ? i : i + 1;
+      if (slot.used > slot.max) slot.used = slot.max;
+      renderContent();
+      saveCharacter();
+    });
+    container.appendChild(circle);
+  };
+  for (var i = 0; i < slot.max; i += 1) {
+    _loop2(i);
+  }
+}
+function restoreAllSlots() {
+  character.spellSlots.forEach(function (slot) {
+    slot.used = 0;
+  });
+  renderContent();
+  saveCharacter();
+}
+function clearAllSlots() {
+  character.spellSlots.forEach(function (slot) {
+    slot.max = 0;
+    slot.used = 0;
+  });
+  renderContent();
+  saveCharacter();
+}
+function buildCombatCountersPage() {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'counter-grid';
+  var counters = [{
+    key: 'damageTaken',
+    label: 'Damage Taken'
+  }, {
+    key: 'damageDealt',
+    label: 'Damage Dealt'
+  }, {
+    key: 'healingReceived',
+    label: 'Healing Received'
+  }, {
+    key: 'healingGiven',
+    label: 'Healing Given'
+  }, {
+    key: 'tempHp',
+    label: 'Temporary HP'
+  }];
+  counters.forEach(function (counter) {
+    var card = document.createElement('div');
+    card.className = 'counter-card';
+    var title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = counter.label;
+    var row = document.createElement('div');
+    row.className = 'counter-row';
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'counter-input';
+    input.value = character.combatCounters[counter.key];
+    input.addEventListener('input', function () {
+      character.combatCounters[counter.key] = Number(input.value) || 0;
+      saveCharacter();
+    });
+    var plus = document.createElement('div');
+    plus.className = 'pill';
+    plus.textContent = '+';
+    plus.addEventListener('click', function () {
+      character.combatCounters[counter.key] = (Number(character.combatCounters[counter.key]) || 0) + 1;
+      input.value = character.combatCounters[counter.key];
+      saveCharacter();
+    });
+    row.append(input, plus);
+    card.append(title, row);
+    wrapper.appendChild(card);
+  });
+  return wrapper;
+}
+function buildDeathSavesPage() {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'death-save-grid';
+  var buildGroup = function buildGroup(label, type) {
+    var group = document.createElement('div');
+    group.className = 'save-group card';
+    var title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = label;
+    var circles = document.createElement('div');
+    circles.className = 'save-circles';
+    var values = type === 'success' ? [0, 1, 2] : [0, 1, 2];
+    var stateKey = type === 'success' ? 'successes' : 'failures';
+    values.forEach(function (index) {
+      var circle = document.createElement('div');
+      circle.className = 'save-circle';
+      circle.textContent = index + 1;
+      circle.addEventListener('click', function () {
+        var _character$deathSaves;
+        var current = ((_character$deathSaves = character.deathSaves) === null || _character$deathSaves === void 0 ? void 0 : _character$deathSaves[stateKey]) || 0;
+        character.deathSaves = character.deathSaves || {};
+        character.deathSaves[stateKey] = index === current ? 0 : index + 1;
+        renderContent();
+        saveCharacter();
+      });
+      circles.appendChild(circle);
+    });
+    var reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'large-button';
+    reset.textContent = 'Reset';
+    reset.addEventListener('click', function () {
+      character.deathSaves = {
+        successes: 0,
+        failures: 0
+      };
+      renderContent();
+      saveCharacter();
+    });
+    group.append(title, circles, reset);
+    return group;
+  };
+  wrapper.append(buildGroup('Successes', 'success'), buildGroup('Failures', 'failure'));
+  return wrapper;
+}
+function buildConditionsPage() {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'card';
+  var title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = 'Conditions';
+  var list = document.createElement('div');
+  list.className = 'conditions-grid';
+  conditionLabels.forEach(function (label) {
+    var _character$conditions;
+    var row = document.createElement('div');
+    row.className = 'condition-row';
+    var conditionKey = label.toLowerCase();
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = Boolean((_character$conditions = character.conditions) === null || _character$conditions === void 0 ? void 0 : _character$conditions[conditionKey]);
+    input.addEventListener('change', function () {
+      if (conditionKey === 'exhaustion') {
+        character.conditions.exhaustion = Number(input.value) || 0;
+      } else {
+        character.conditions[conditionKey] = input.checked;
+      }
+      saveCharacter();
+    });
+    var labelEl = document.createElement('div');
+    labelEl.className = 'condition-label';
+    labelEl.textContent = label;
+    row.append(input, labelEl);
+    if (label === 'Exhaustion') {
+      var exhaustionInput = document.createElement('input');
+      exhaustionInput.type = 'number';
+      exhaustionInput.min = 0;
+      exhaustionInput.max = 6;
+      exhaustionInput.className = 'exhaustion-input';
+      exhaustionInput.value = character.conditions.exhaustion || 0;
+      exhaustionInput.addEventListener('input', function () {
+        character.conditions.exhaustion = Math.max(0, Math.min(6, Number(exhaustionInput.value) || 0));
+        saveCharacter();
+      });
+      row.appendChild(exhaustionInput);
     }
-
-    function calcModifier(value) {
-      return Math.floor((value - 10) / 2);
-    }
-
-    function formatModifier(value) {
-      return (value >= 0 ? '+' : '') + value;
-    }
-
+    list.appendChild(row);
+  });
+  wrapper.append(title, list);
+  return wrapper;
+}
+function buildCharacterContent(key) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'stack';
+  switch (key) {
+    case 'characterInfo':
+      wrapper.appendChild(buildCharacterInfoPage());
+      break;
+    case 'abilities':
+      wrapper.appendChild(buildAbilityScoresPage());
+      break;
+    default:
+      wrapper.appendChild(buildSkillsPage());
+  }
+  return wrapper;
+}
+function buildCharacterInfoPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var grid = document.createElement('div');
+  grid.className = 'grid-2';
+  var fields = [['Name', 'name', 'text', character.name], ['Class', 'class', 'text', character.class], ['Level', 'level', 'number', character.level, {
+    min: 1,
+    max: 20
+  }], ['Race', 'race', 'text', character.race], ['Background', 'background', 'text', character.background], ['Armor Class', 'armorClass', 'number', character.armorClass, {
+    min: 0
+  }], ['Initiative', 'initiative', 'number', character.initiative, {
+    min: -20,
+    max: 20
+  }], ['Speed', 'speed', 'number', character.speed, {
+    min: 0
+  }], ['Passive Perception', 'passivePerception', 'number', character.passivePerception, {
+    min: 0
+  }], ['Proficiency Bonus', 'proficiencyBonus', 'number', character.proficiencyBonus, {
+    min: 0
+  }]];
+  fields.forEach(function (_ref) {
+    var _ref2 = _slicedToArray(_ref, 5),
+      label = _ref2[0],
+      key = _ref2[1],
+      type = _ref2[2],
+      value = _ref2[3],
+      attrs = _ref2[4];
+    var field = createField(label, key, type, value, attrs || {}, function () {
+      if (['class', 'level'].indexOf(key) !== -1) {
+        renderContent();
+      }
+    });
+    grid.appendChild(field);
+  });
+  card.appendChild(grid);
+  return card;
+}
+function buildAbilityScoresPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = 'Ability Scores';
+  var list = document.createElement('div');
+  list.className = 'stack';
+  abilityOrder.forEach(function (ability) {
+    var row = document.createElement('div');
+    row.className = 'ability-row';
+    var name = document.createElement('div');
+    name.className = 'ability-name';
+    name.textContent = ability;
+    var score = document.createElement('div');
+    score.className = 'stat-value';
+    score.textContent = character.stats[ability];
+    var modifier = document.createElement('div');
+    modifier.className = 'modifier-value';
+    modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'inline-pill';
+    button.textContent = 'Skills >';
+    button.addEventListener('click', function () {
+      selectedAbility = ability;
+      currentSection = 1;
+      currentSubpage = 2;
+      renderApp();
+    });
+    row.append(name, score, modifier, button);
+    list.appendChild(row);
+  });
+  card.append(title, list);
+  return card;
+}
+function buildSkillsPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = "".concat(selectedAbility, " Skills");
+  var list = document.createElement('div');
+  list.className = 'stack';
+  var skills = skillNames[selectedAbility] || [];
+  if (skills.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'help-text';
+    empty.textContent = 'No skills are listed for this ability.';
+    list.appendChild(empty);
+  } else {
+    skills.forEach(function (skill) {
+      var row = document.createElement('div');
+      row.className = 'skill-row';
+      var skillName = document.createElement('div');
+      skillName.className = 'skill-name';
+      skillName.textContent = skill;
+      var modifierValue = document.createElement('input');
+      modifierValue.type = 'number';
+      modifierValue.className = 'stat-value';
+      modifierValue.value = character.skills[selectedAbility][skill].modifier;
+      modifierValue.addEventListener('input', function () {
+        character.skills[selectedAbility][skill].modifier = Number(modifierValue.value) || 0;
+        saveCharacter();
+      });
+      var proficiency = document.createElement('button');
+      proficiency.type = 'button';
+      proficiency.className = 'small-pill';
+      proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
+      proficiency.addEventListener('click', function () {
+        var states = ['NONE', 'PROF', 'EXP'];
+        var current = states.indexOf(character.skills[selectedAbility][skill].proficiency);
+        character.skills[selectedAbility][skill].proficiency = states[(current + 1) % states.length];
+        proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
+        saveCharacter();
+      });
+      row.append(skillName, modifierValue, proficiency);
+      list.appendChild(row);
+    });
+  }
+  card.append(title, list);
+  return card;
+}
+function buildMagicContent(key) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'stack';
+  switch (key) {
+    case 'spellcasting':
+      wrapper.appendChild(buildSpellcastingPage());
+      break;
+    default:
+      wrapper.appendChild(buildResourcesPage());
+  }
+  return wrapper;
+}
+function buildSpellcastingPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var grid = document.createElement('div');
+  grid.className = 'grid-2';
+  grid.append(createNumberField('Spell Save DC', 'spellSaveDc', character.spellcasting.saveDc, {
+    min: 0
+  }, function () {}), createNumberField('Spell Attack Bonus', 'spellAttackBonus', character.spellcasting.attackBonus, {
+    min: -20,
+    max: 20
+  }, function () {}));
+  var abilityField = document.createElement('div');
+  abilityField.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = 'Spellcasting Ability';
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = character.spellcasting.ability;
+  input.addEventListener('input', function () {
+    character.spellcasting.ability = input.value.toUpperCase();
+    saveCharacter();
+  });
+  abilityField.append(label, input);
+  grid.appendChild(abilityField);
+  card.appendChild(grid);
+  return card;
+}
+function buildResourcesPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = 'Class Resources';
+  var list = document.createElement('div');
+  list.className = 'stack';
+  character.classResources.forEach(function (resource, index) {
+    var row = document.createElement('div');
+    row.className = 'resource-row';
+    var name = document.createElement('input');
+    name.type = 'text';
+    name.value = resource.name;
+    name.className = 'resource-name';
+    name.addEventListener('input', function () {
+      character.classResources[index].name = name.value;
+      saveCharacter();
+    });
+    var value = document.createElement('input');
+    value.type = 'number';
+    value.className = 'resource-value';
+    value.value = resource.value;
+    value.addEventListener('input', function () {
+      character.classResources[index].value = Number(value.value) || 0;
+      saveCharacter();
+    });
+    var minus = document.createElement('div');
+    minus.className = 'pill';
+    minus.textContent = '-';
+    minus.addEventListener('click', function () {
+      character.classResources[index].value = Math.max(0, Number(character.classResources[index].value) - 1);
+      value.value = character.classResources[index].value;
+      saveCharacter();
+    });
+    var plus = document.createElement('div');
+    plus.className = 'pill';
+    plus.textContent = '+';
+    plus.addEventListener('click', function () {
+      character.classResources[index].value = Number(character.classResources[index].value) + 1;
+      value.value = character.classResources[index].value;
+      saveCharacter();
+    });
+    row.append(name, value, minus, plus);
+    list.appendChild(row);
+  });
+  var addButton = createButton('Add Resource', function () {
+    character.classResources.push({
+      name: 'New Resource',
+      value: 0
+    });
+    renderContent();
+    saveCharacter();
+  });
+  card.append(title, list, addButton);
+  return card;
+}
+function buildInventoryContent(key) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'stack';
+  switch (key) {
+    case 'money':
+      wrapper.appendChild(buildMoneyPage());
+      break;
+    case 'inventory':
+      wrapper.appendChild(buildInventoryPage());
+      break;
+    default:
+      wrapper.appendChild(buildNotesPage());
+  }
+  return wrapper;
+}
+function buildMoneyPage() {
+  var section = document.createElement('div');
+  section.className = 'card';
+  moneyKeys.forEach(function (currency) {
+    var row = document.createElement('div');
+    row.className = 'resource-row';
+    var title = document.createElement('div');
+    title.className = 'label-text';
+    title.textContent = currencyLabels[currency] || currency;
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'resource-value';
+    input.value = character.money[currency];
+    input.addEventListener('input', function () {
+      character.money[currency] = Math.max(0, Number(input.value) || 0);
+      saveCharacter();
+    });
+    var minus = document.createElement('div');
+    minus.className = 'pill';
+    minus.textContent = '-';
+    minus.addEventListener('click', function () {
+      character.money[currency] = Math.max(0, Number(character.money[currency]) - 1);
+      input.value = character.money[currency];
+      saveCharacter();
+    });
+    var plus = document.createElement('div');
+    plus.className = 'pill';
+    plus.textContent = '+';
+    plus.addEventListener('click', function () {
+      character.money[currency] = Number(character.money[currency]) + 1;
+      input.value = character.money[currency];
+      saveCharacter();
+    });
+    row.append(title, input, minus, plus);
+    section.appendChild(row);
+  });
+  return section;
+}
+function buildInventoryPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var list = document.createElement('div');
+  list.className = 'stack';
+  character.inventory.forEach(function (item, index) {
+    var row = document.createElement('div');
+    row.className = 'inventory-row';
+    var name = document.createElement('input');
+    name.type = 'text';
+    name.value = item.name;
+    name.className = 'item-name';
+    name.addEventListener('input', function () {
+      character.inventory[index].name = name.value;
+      saveCharacter();
+    });
+    var quantity = document.createElement('input');
+    quantity.type = 'number';
+    quantity.min = 0;
+    quantity.className = 'quantity-value';
+    quantity.value = item.quantity;
+    quantity.addEventListener('input', function () {
+      character.inventory[index].quantity = Math.max(0, Number(quantity.value) || 0);
+      saveCharacter();
+    });
+    var minus = document.createElement('div');
+    minus.className = 'pill';
+    minus.textContent = '-';
+    minus.addEventListener('click', function () {
+      character.inventory[index].quantity = Math.max(0, Number(character.inventory[index].quantity) - 1);
+      quantity.value = character.inventory[index].quantity;
+      saveCharacter();
+    });
+    var plus = document.createElement('div');
+    plus.className = 'pill';
+    plus.textContent = '+';
+    plus.addEventListener('click', function () {
+      character.inventory[index].quantity = Number(character.inventory[index].quantity) + 1;
+      quantity.value = character.inventory[index].quantity;
+      saveCharacter();
+    });
+    row.append(name, quantity, minus, plus);
+    list.appendChild(row);
+  });
+  var addButton = createButton('Add Item', function () {
+    character.inventory.push({
+      name: 'New Item',
+      quantity: 1
+    });
+    renderContent();
+    saveCharacter();
+  });
+  card.append(list, addButton);
+  return card;
+}
+function buildNotesPage() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var label = document.createElement('div');
+  label.className = 'label-text';
+  label.textContent = 'Notes';
+  var textarea = document.createElement('textarea');
+  textarea.value = character.notes || '';
+  textarea.addEventListener('input', function () {
+    character.notes = textarea.value;
+    saveCharacter();
+  });
+  card.append(label, textarea);
+  return card;
+}
+function buildSettingsContent() {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var buttons = [['Export Character', handleExport], ['Import Character', handleImport], ['Reset Character', handleReset]];
+  buttons.forEach(function (_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 2),
+      label = _ref4[0],
+      handler = _ref4[1];
+    return card.appendChild(createButton(label, handler));
+  });
+  var preferenceCard = document.createElement('div');
+  preferenceCard.className = 'card';
+  var prefLabel = document.createElement('div');
+  prefLabel.className = 'label-text';
+  prefLabel.textContent = 'Preferences';
+  var prefRow = document.createElement('div');
+  prefRow.className = 'condition-row';
+  var checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = character.preferences.autoSave !== false;
+  checkbox.addEventListener('change', function () {
+    character.preferences.autoSave = checkbox.checked;
+    saveCharacter();
+  });
+  var prefText = document.createElement('div');
+  prefText.className = 'condition-label';
+  prefText.textContent = 'Auto-save';
+  prefRow.append(checkbox, prefText);
+  preferenceCard.append(prefLabel, prefRow);
+  var textareaWrap = document.createElement('div');
+  textareaWrap.className = 'card';
+  var help = document.createElement('div');
+  help.className = 'help-text';
+  help.textContent = 'Paste JSON here for import, or copy exported JSON.';
+  var textarea = document.createElement('textarea');
+  textarea.id = 'jsonArea';
+  textarea.placeholder = '{ "name": "..." }';
+  textareaWrap.append(help, textarea);
+  card.append(preferenceCard, textareaWrap);
+  return card;
+}
+function handleExport() {
+  var jsonArea = document.getElementById('jsonArea');
+  var exportText = JSON.stringify(character, null, 2);
+  jsonArea.value = exportText;
+  copyText(exportText);
+  statusBar.textContent = 'Character JSON copied to clipboard and shown below.';
+}
+function handleImport() {
+  var jsonArea = document.getElementById('jsonArea');
+  try {
+    var parsed = JSON.parse(jsonArea.value);
+    character = mergeCharacter(characterTemplate, parsed);
     renderApp();
     saveCharacter();
+    statusBar.textContent = 'Character imported successfully.';
+  } catch (error) {
+    statusBar.textContent = 'Invalid JSON import. Check your data.';
+  }
+}
+function handleReset() {
+  localStorage.removeItem(STORAGE_KEY);
+  character = JSON.parse(JSON.stringify(characterTemplate));
+  renderApp();
+  saveCharacter();
+  statusBar.textContent = 'Save cleared. Template restored.';
+}
+function copyText(text) {
+  try {
+    navigator.clipboard.writeText(text).catch(function () {});
+  } catch (error) {
+    console.warn('Clipboard not available.', error);
+  }
+}
+function calcModifier(value) {
+  return Math.floor((value - 10) / 2);
+}
+function formatModifier(value) {
+  return (value >= 0 ? '+' : '') + value;
+}
+renderApp();
+saveCharacter();
   </script>
 </body>
 </html>
