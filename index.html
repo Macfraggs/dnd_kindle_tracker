@@ -398,6 +398,14 @@
       if (!Array.isArray) {
         Array.isArray = function (value) { return Object.prototype.toString.call(value) === '[object Array]'; };
       }
+      if (!Array.from) {
+        Array.from = function (value) {
+          var result = [];
+          var length = value && typeof value.length === 'number' ? value.length : 0;
+          for (var i = 0; i < length; i += 1) { result.push(value[i]); }
+          return result;
+        };
+      }
       if (!Array.prototype.indexOf) {
         Array.prototype.indexOf = function (value) {
           for (var i = 0; i < this.length; i += 1) { if (this[i] === value) { return i; } }
@@ -1051,7 +1059,7 @@ function createSpellSlotRow(level) {
 function getSpellcastingInfo() {
   var className = String(character.class || '').trim();
   var normalized = className.toLowerCase();
-  if (halfCasterClasses.includes(normalized)) {
+  if (halfCasterClasses.indexOf(normalized) !== -1) {
     return {
       type: 'Half Caster',
       subclass: className || 'Half Caster'
