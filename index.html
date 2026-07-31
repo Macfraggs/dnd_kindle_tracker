@@ -595,18 +595,47 @@
     }
 
     function mergeCharacter(template, data) {
-      const merged = JSON.parse(JSON.stringify(template));
-      for (const key in data) {
-        if (data[key] === null || data[key] === undefined) continue;
-        if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
-          merged[key] = mergeCharacter(merged[key], data[key]);
-        } else if (Array.isArray(data[key]) && Array.isArray(merged[key])) {
-          merged[key] = data[key].map((item, idx) => mergeCharacter(merged[key][idx] || {}, item));
-        } else {
-          merged[key] = data[key];
-        }
+      if (data === null || data === undefined) {
+        return template === undefined ? null : JSON.parse(JSON.stringify(template));
       }
-      return merged;
+
+      if (template === undefined || template === null) {
+        if (Array.isArray(data)) {
+          return data.map(item => mergeCharacter(undefined, item));
+        }
+        if (typeof data === 'object') {
+          const merged = {};
+          for (const key in data) {
+            merged[key] = mergeCharacter(undefined, data[key]);
+          }
+          return merged;
+        }
+        return data;
+      }
+
+      if (Array.isArray(data)) {
+        if (!Array.isArray(template)) {
+          return data.map(item => mergeCharacter(undefined, item));
+        }
+        return data.map((item, idx) => mergeCharacter(template[idx], item));
+      }
+
+      if (typeof data === 'object' && !Array.isArray(data)) {
+        const merged = JSON.parse(JSON.stringify(template));
+        for (const key in data) {
+          if (data[key] === null || data[key] === undefined) continue;
+          if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
+            merged[key] = mergeCharacter(merged[key], data[key]);
+          } else if (Array.isArray(data[key]) && Array.isArray(merged[key])) {
+            merged[key] = data[key].map((item, idx) => mergeCharacter(merged[key][idx], item));
+          } else {
+            merged[key] = data[key];
+          }
+        }
+        return merged;
+      }
+
+      return data;
     }
 
     function ensureSkillData() {
