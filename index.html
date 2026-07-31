@@ -212,6 +212,26 @@
       font-weight: 700;
     }
     .modifier-value { min-width: 72px; }
+    .resource-row, .inventory-row {
+      grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+    }
+    .money-row {
+      display: grid;
+      grid-template-columns: minmax(105px, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .money-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .money-step {
+      min-width: 42px;
+      min-height: 40px;
+      padding: 0 4px;
+      font-size: 0.85rem;
+    }
     .spell-grid {
       display: flex;
       flex-direction: column;
@@ -375,7 +395,9 @@
     .hidden { display: none !important; }
     @media (max-width: 680px) {
       .grid-2, .grid-3, .counter-grid, .death-save-grid, .conditions-grid { grid-template-columns: 1fr; }
-      .stat-row, .ability-row, .skill-row, .resource-row, .inventory-row { grid-template-columns: 1fr auto auto; }
+      .stat-row, .ability-row, .skill-row { grid-template-columns: 1fr auto auto; }
+      .resource-row, .inventory-row { grid-template-columns: minmax(0, 1fr) auto auto auto auto; }
+      .money-row { grid-template-columns: minmax(90px, 1fr) auto auto; }
       .spell-row { grid-template-columns: 1fr; }
       .spell-circles { justify-content: flex-start; }
     }
@@ -678,22 +700,7 @@ var characterTemplate = {
     ability: 'INT'
   },
   classResources: [{
-    name: 'Channel Divinity',
-    value: 0
-  }, {
-    name: 'Sorcery Points',
-    value: 0
-  }, {
-    name: 'Ki Points',
-    value: 0
-  }, {
-    name: 'Bardic Inspiration',
-    value: 0
-  }, {
-    name: 'Rage',
-    value: 0
-  }, {
-    name: 'Wild Shape',
+    name: 'Resource',
     value: 0
   }],
   inventory: [{
@@ -978,7 +985,7 @@ function createHealthCard(labelText, key) {
   if (key !== 'max') {
     var buttonRow = document.createElement('div');
     buttonRow.className = 'button-row';
-    ['-10', '-5', '+5', '+10'].forEach(function (label) {
+    ['-10', '-5', '-1', '+1', '+5', '+10'].forEach(function (label) {
       var button = document.createElement('div');
       button.className = 'pill';
       button.textContent = label;
@@ -1348,9 +1355,15 @@ function buildAbilityScoresPage() {
     var name = document.createElement('div');
     name.className = 'ability-name';
     name.textContent = ability;
-    var score = document.createElement('div');
+    var score = document.createElement('input');
+    score.type = 'number';
     score.className = 'stat-value';
-    score.textContent = character.stats[ability];
+    score.value = character.stats[ability];
+    score.addEventListener('input', function () {
+      character.stats[ability] = Number(score.value) || 0;
+      renderContent();
+      saveCharacter();
+    });
     var modifier = document.createElement('div');
     modifier.className = 'modifier-value';
     modifier.textContent = formatModifier(calcModifier(character.stats[ability]));
@@ -1370,12 +1383,22 @@ function buildAbilityScoresPage() {
   card.append(title, list);
   return card;
 }
+function getSkillModifier(ability, skill) {
+  var proficiency = character.skills[ability][skill].proficiency;
+  var bonus = calcModifier(character.stats[ability]);
+  if (proficiency === 'PROF') {
+    bonus += Number(character.proficiencyBonus) || 0;
+  } else if (proficiency === 'EXP') {
+    bonus += (Number(character.proficiencyBonus) || 0) * 2;
+  }
+  return bonus;
+}
 function buildSkillsPage() {
   var card = document.createElement('div');
   card.className = 'card';
   var title = document.createElement('div');
   title.className = 'card-title';
-  title.textContent = "".concat(selectedAbility, " Skills");
+  title.textContent = selectedAbility + ' Skills';
   var list = document.createElement('div');
   list.className = 'stack';
   var skills = skillNames[selectedAbility] || [];
@@ -1391,14 +1414,9 @@ function buildSkillsPage() {
       var skillName = document.createElement('div');
       skillName.className = 'skill-name';
       skillName.textContent = skill;
-      var modifierValue = document.createElement('input');
-      modifierValue.type = 'number';
+      var modifierValue = document.createElement('div');
       modifierValue.className = 'stat-value';
-      modifierValue.value = character.skills[selectedAbility][skill].modifier;
-      modifierValue.addEventListener('input', function () {
-        character.skills[selectedAbility][skill].modifier = Number(modifierValue.value) || 0;
-        saveCharacter();
-      });
+      modifierValue.textContent = formatModifier(getSkillModifier(selectedAbility, skill));
       var proficiency = document.createElement('button');
       proficiency.type = 'button';
       proficiency.className = 'small-pill';
@@ -1407,7 +1425,7 @@ function buildSkillsPage() {
         var states = ['NONE', 'PROF', 'EXP'];
         var current = states.indexOf(character.skills[selectedAbility][skill].proficiency);
         character.skills[selectedAbility][skill].proficiency = states[(current + 1) % states.length];
-        proficiency.textContent = character.skills[selectedAbility][skill].proficiency;
+        renderContent();
         saveCharacter();
       });
       row.append(skillName, modifierValue, proficiency);
@@ -1429,32 +1447,55 @@ function buildMagicContent(key) {
   }
   return wrapper;
 }
+function getSpellcastingAbility() {
+  var ability = String(character.spellcasting.ability || 'INT').toUpperCase();
+  return character.stats[ability] === undefined ? 'INT' : ability;
+}
 function buildSpellcastingPage() {
   var card = document.createElement('div');
   card.className = 'card';
   var grid = document.createElement('div');
   grid.className = 'grid-2';
-  grid.append(createNumberField('Spell Save DC', 'spellSaveDc', character.spellcasting.saveDc, {
-    min: 0
-  }, function () {}), createNumberField('Spell Attack Bonus', 'spellAttackBonus', character.spellcasting.attackBonus, {
-    min: -20,
-    max: 20
-  }, function () {}));
+  var ability = getSpellcastingAbility();
+  var abilityModifier = calcModifier(character.stats[ability]);
+  var proficiency = Number(character.proficiencyBonus) || 0;
+  var saveDc = 8 + proficiency + abilityModifier;
+  var attackBonus = proficiency + abilityModifier;
+  [['Spell Save DC', saveDc], ['Spell Attack Bonus', formatModifier(attackBonus)]].forEach(function (entry) {
+    var field = document.createElement('div');
+    field.className = 'field';
+    var label = document.createElement('label');
+    label.textContent = entry[0];
+    var value = document.createElement('div');
+    value.className = 'stat-value';
+    value.textContent = entry[1];
+    field.append(label, value);
+    grid.appendChild(field);
+  });
   var abilityField = document.createElement('div');
   abilityField.className = 'field';
-  var label = document.createElement('label');
-  label.textContent = 'Spellcasting Ability';
+  var abilityLabel = document.createElement('label');
+  abilityLabel.textContent = 'Spellcasting Ability';
   var input = document.createElement('input');
   input.type = 'text';
-  input.value = character.spellcasting.ability;
+  input.value = ability;
   input.addEventListener('input', function () {
     character.spellcasting.ability = input.value.toUpperCase();
+    renderContent();
     saveCharacter();
   });
-  abilityField.append(label, input);
+  abilityField.append(abilityLabel, input);
   grid.appendChild(abilityField);
   card.appendChild(grid);
   return card;
+}
+function createCompactButton(label, handler, className) {
+  var button = document.createElement('button');
+  button.type = 'button';
+  button.className = className || 'pill';
+  button.textContent = label;
+  button.addEventListener('click', handler);
+  return button;
 }
 function buildResourcesPage() {
   var card = document.createElement('div');
@@ -1483,30 +1524,26 @@ function buildResourcesPage() {
       character.classResources[index].value = Number(value.value) || 0;
       saveCharacter();
     });
-    var minus = document.createElement('div');
-    minus.className = 'pill';
-    minus.textContent = '-';
-    minus.addEventListener('click', function () {
-      character.classResources[index].value = Math.max(0, Number(character.classResources[index].value) - 1);
-      value.value = character.classResources[index].value;
-      saveCharacter();
-    });
-    var plus = document.createElement('div');
-    plus.className = 'pill';
-    plus.textContent = '+';
-    plus.addEventListener('click', function () {
-      character.classResources[index].value = Number(character.classResources[index].value) + 1;
-      value.value = character.classResources[index].value;
-      saveCharacter();
-    });
-    row.append(name, value, minus, plus);
+    row.append(name, value,
+      createCompactButton('-', function () {
+        character.classResources[index].value = Math.max(0, Number(character.classResources[index].value) - 1);
+        value.value = character.classResources[index].value;
+        saveCharacter();
+      }),
+      createCompactButton('+', function () {
+        character.classResources[index].value = Number(character.classResources[index].value) + 1;
+        value.value = character.classResources[index].value;
+        saveCharacter();
+      }),
+      createCompactButton('×', function () {
+        character.classResources.splice(index, 1);
+        renderContent();
+        saveCharacter();
+      }));
     list.appendChild(row);
   });
   var addButton = createButton('Add Resource', function () {
-    character.classResources.push({
-      name: 'New Resource',
-      value: 0
-    });
+    character.classResources.push({ name: 'New Resource', value: 0 });
     renderContent();
     saveCharacter();
   });
@@ -1533,7 +1570,7 @@ function buildMoneyPage() {
   section.className = 'card';
   moneyKeys.forEach(function (currency) {
     var row = document.createElement('div');
-    row.className = 'resource-row';
+    row.className = 'money-row';
     var title = document.createElement('div');
     title.className = 'label-text';
     title.textContent = currencyLabels[currency] || currency;
@@ -1545,23 +1582,16 @@ function buildMoneyPage() {
       character.money[currency] = Math.max(0, Number(input.value) || 0);
       saveCharacter();
     });
-    var minus = document.createElement('div');
-    minus.className = 'pill';
-    minus.textContent = '-';
-    minus.addEventListener('click', function () {
-      character.money[currency] = Math.max(0, Number(character.money[currency]) - 1);
-      input.value = character.money[currency];
-      saveCharacter();
+    var actions = document.createElement('div');
+    actions.className = 'money-actions';
+    [-10, -5, -1, 1, 5, 10].forEach(function (delta) {
+      actions.appendChild(createCompactButton(delta > 0 ? '+' + delta : String(delta), function () {
+        character.money[currency] = Math.max(0, Number(character.money[currency]) + delta);
+        input.value = character.money[currency];
+        saveCharacter();
+      }, 'small-pill money-step'));
     });
-    var plus = document.createElement('div');
-    plus.className = 'pill';
-    plus.textContent = '+';
-    plus.addEventListener('click', function () {
-      character.money[currency] = Number(character.money[currency]) + 1;
-      input.value = character.money[currency];
-      saveCharacter();
-    });
-    row.append(title, input, minus, plus);
+    row.append(title, input, actions);
     section.appendChild(row);
   });
   return section;
@@ -1591,30 +1621,26 @@ function buildInventoryPage() {
       character.inventory[index].quantity = Math.max(0, Number(quantity.value) || 0);
       saveCharacter();
     });
-    var minus = document.createElement('div');
-    minus.className = 'pill';
-    minus.textContent = '-';
-    minus.addEventListener('click', function () {
-      character.inventory[index].quantity = Math.max(0, Number(character.inventory[index].quantity) - 1);
-      quantity.value = character.inventory[index].quantity;
-      saveCharacter();
-    });
-    var plus = document.createElement('div');
-    plus.className = 'pill';
-    plus.textContent = '+';
-    plus.addEventListener('click', function () {
-      character.inventory[index].quantity = Number(character.inventory[index].quantity) + 1;
-      quantity.value = character.inventory[index].quantity;
-      saveCharacter();
-    });
-    row.append(name, quantity, minus, plus);
+    row.append(name, quantity,
+      createCompactButton('-', function () {
+        character.inventory[index].quantity = Math.max(0, Number(character.inventory[index].quantity) - 1);
+        quantity.value = character.inventory[index].quantity;
+        saveCharacter();
+      }),
+      createCompactButton('+', function () {
+        character.inventory[index].quantity = Number(character.inventory[index].quantity) + 1;
+        quantity.value = character.inventory[index].quantity;
+        saveCharacter();
+      }),
+      createCompactButton('×', function () {
+        character.inventory.splice(index, 1);
+        renderContent();
+        saveCharacter();
+      }));
     list.appendChild(row);
   });
   var addButton = createButton('Add Item', function () {
-    character.inventory.push({
-      name: 'New Item',
-      quantity: 1
-    });
+    character.inventory.push({ name: 'New Item', quantity: 1 });
     renderContent();
     saveCharacter();
   });
