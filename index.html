@@ -291,64 +291,89 @@
       padding: 0 4px;
       font-size: 0.85rem;
     }
-    .spell-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+    .spell-page {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       min-height: 0;
+      height: 100%;
+    }
+    .spell-scroll-area {
       flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       padding-right: 2px;
     }
-    .spell-row {
+    .spell-featured-grid {
       display: grid;
-      grid-template-columns: 1.4fr 0.9fr 2fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      align-items: center;
-      border-bottom: 1px solid #000;
-      padding-bottom: 8px;
+      align-content: start;
     }
-    .spell-level {
+    .spell-lower-stack {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      white-space: nowrap;
+      flex-direction: column;
+      gap: 10px;
     }
-    .spell-badge {
-      width: 34px;
-      height: 34px;
-      border: 2px solid #000;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
+    .spell-level-card {
+      border: 3px solid #000;
+      background: #fff;
+      padding: 14px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 152px;
+      justify-content: flex-start;
+    }
+    .spell-card-header {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      text-align: center;
     }
     .spell-circles {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      justify-content: flex-end;
+      justify-content: center;
+      align-items: center;
     }
     .slot-circle {
-      width: 60px;
-      height: 60px;
-      border: 2px solid #000;
+      width: 56px;
+      height: 56px;
+      border: 3px solid #000;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       background: #fff;
-      font-size: 1.12rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 900;
       user-select: none;
       line-height: 1;
     }
     .slot-circle.used {
       background: #000;
       color: #fff;
+    }
+    .spell-action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .spell-action-row .pill {
+      min-height: 46px;
+      padding: 0 12px;
+      font-size: 0.95rem;
+      flex: 1 1 0;
+      justify-content: center;
     }
     .counter-grid {
       display: grid;
@@ -467,13 +492,10 @@
       .ability-row .stat-value, .ability-row .modifier-value { min-width: 0; padding: 8px 4px; }
       .resource-row, .inventory-row { grid-template-columns: minmax(0, 1fr) auto auto auto auto; }
       .money-row { grid-template-columns: minmax(90px, 1fr) auto auto; }
-      .spell-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-      .spell-row { grid-template-columns: auto auto minmax(0, 1fr); gap: 4px; padding: 6px; border: 2px solid #000; }
-      .spell-level { gap: 0; }
-      .spell-level > div:not(.spell-badge) { display: none; }
-      .spell-badge { width: 30px; height: 30px; }
-      .spell-circles { gap: 6px; justify-content: flex-start; }
-      .slot-circle { width: 48px; height: 48px; font-size: 1rem; }
+      .spell-featured-grid { gap: 8px; }
+      .spell-level-card { min-height: 138px; padding: 12px 10px 14px; }
+      .spell-circles { gap: 8px; }
+      .slot-circle { width: 50px; height: 50px; font-size: 0.95rem; }
     }
   </style>
 </head>
@@ -1082,56 +1104,58 @@ function createHealthCard(labelText, key) {
 }
 function buildSpellSlotsPage() {
   var section = document.createElement('div');
-  section.className = 'card';
+  section.className = 'card spell-page';
   var subtitle = document.createElement('div');
   subtitle.className = 'help-text';
   var info = getSpellcastingInfo();
   subtitle.textContent = "Spellcasting: ".concat(info.type, " (").concat(info.subclass, ")");
-  var grid = document.createElement('div');
-  grid.className = 'spell-grid';
+  var scrollArea = document.createElement('div');
+  scrollArea.className = 'spell-scroll-area';
   var visibleLevels = getVisibleSpellLevels();
   if (visibleLevels.length === 0) {
     var empty = document.createElement('div');
     empty.className = 'help-text';
     empty.textContent = 'No spell slots are available at this character level.';
-    grid.appendChild(empty);
+    scrollArea.appendChild(empty);
   } else {
-    visibleLevels.forEach(function (level) {
-      return grid.appendChild(createSpellSlotRow(level));
+    var featuredLevels = visibleLevels.slice(0, 4);
+    var featuredGrid = document.createElement('div');
+    featuredGrid.className = 'spell-featured-grid';
+    featuredLevels.forEach(function (level) {
+      featuredGrid.appendChild(createSpellSlotRow(level));
     });
+    scrollArea.appendChild(featuredGrid);
+    var lowerLevels = visibleLevels.slice(4);
+    if (lowerLevels.length > 0) {
+      var lowerStack = document.createElement('div');
+      lowerStack.className = 'spell-lower-stack';
+      lowerLevels.forEach(function (level) {
+        lowerStack.appendChild(createSpellSlotRow(level));
+      });
+      scrollArea.appendChild(lowerStack);
+    }
   }
   var actionRow = document.createElement('div');
-  actionRow.className = 'button-row';
+  actionRow.className = 'spell-action-row';
   actionRow.appendChild(createButton('Restore All', restoreAllSlots));
   actionRow.appendChild(createButton('Clear All', clearAllSlots));
-  section.append(subtitle, grid, actionRow);
+  section.append(subtitle, scrollArea, actionRow);
   return section;
 }
 function createSpellSlotRow(level) {
   var row = document.createElement('div');
-  row.className = 'spell-row';
-  var label = document.createElement('div');
-  label.className = 'spell-level';
-  var badge = document.createElement('div');
-  badge.className = 'spell-badge';
-  badge.textContent = level;
-  var labelText = document.createElement('div');
-  labelText.textContent = 'Level ' + level;
-  label.append(badge, labelText);
-  var totalBox = document.createElement('div');
-  totalBox.className = 'field';
-  var maxValue = document.createElement('div');
-  maxValue.className = 'stat-value';
-  maxValue.textContent = getSpellLevelSlots(level);
-  totalBox.appendChild(maxValue);
+  row.className = 'spell-level-card';
+  row.dataset.level = level;
+  var header = document.createElement('div');
+  header.className = 'spell-card-header';
+  header.textContent = 'Level ' + level;
   var circles = document.createElement('div');
   circles.className = 'spell-circles';
   var slot = getOrCreateSpellSlot(level);
   slot.max = getSpellLevelSlots(level);
   if (slot.used > slot.max) slot.used = slot.max;
   createSlotCircles(slot, circles);
-  row.append(label, totalBox, circles);
-  row.dataset.level = level;
+  row.append(header, circles);
   return row;
 }
 function getSpellcastingInfo() {
